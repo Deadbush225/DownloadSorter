@@ -1,0 +1,4 @@
+build/
+.vscode/
+build.ps1
+run-build.ps1
