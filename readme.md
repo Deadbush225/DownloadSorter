@@ -1,8 +1,5 @@
 # Download Sorter
 
-<<<<<<< HEAD
-![](/docs/Main-menu.png)
-=======
 - a small program to sort by types your assorted downloads
 <p align="center" width="100%">
   <img src="./docs/Download Sorter.png"/>
@@ -16,7 +13,6 @@
 
 - Go to `Release` and download the setup file
 - Follow the installation Procedure
->>>>>>> 5199a7f ((docs) update high res icon)
 
 ### How to use
 
