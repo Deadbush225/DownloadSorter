@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Installer>
+    <Name>Download Sorter</Name>
+    <Version>1.0.0</Version>
+    <Title>Download Sorter Installer</Title>
+    <Publisher>deadbush25</Publisher>
+    <StartMenuDir>Download Sorter</StartMenuDir>
+    <InstallerWindowIcon>../src/icons/Download Sorter.png</InstallerWindowIcon>
+    <InstallerApplicationIcon>../src/icons/Download Sorter</InstallerApplicationIcon>
+    <TargetDir>@ApplicationsDirX64@/Download Sorter</TargetDir>
+</Installer>

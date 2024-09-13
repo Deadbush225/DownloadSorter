@@ -38,8 +38,14 @@ set(SOURCE_FILES
 
 # add_executable(PrintingRates main.cpp DashboardWidget.cpp)
 #---
-add_executable(${PROJECT_NAME} ${SOURCE_FILES} icons.qrc)
+set(app_icon_resource_windows "${CMAKE_CURRENT_SOURCE_DIR}/icons/Download Sorter.rc")
+add_executable(${PROJECT_NAME} ${SOURCE_FILES} ${app_icon_resource_windows} icons.qrc)
 # include_directories("src/Utils" "Utils/")
+set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "Download Sorter")
+
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    set_property(TARGET ${PROJECT_NAME} PROPERTY WIN32_EXECUTABLE true)
+endif()
 
 # target_include_directories(${PROJECT_NAME} PRIVATE "src/Utils/")
 # add_executable(Testsd ${SOURCE_FILES})
@@ -61,3 +67,27 @@ endif()
 # set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 # set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
 # include(CPack)
+
+# Install Scripts
+
+if(APPLE)
+    set(executable_path "$<TARGET_FILE_NAME:${PROJECT_NAME}>.app")
+elseif(WIN32)
+    set(executable_path "\${QT_DEPLOY_BIN_DIR}/$<TARGET_FILE_NAME:${PROJECT_NAME}>")
+else()
+    set(executable_path "\${QT_DEPLOY_BIN_DIR}/$<TARGET_FILE_NAME:${PROJECT_NAME}>")
+endif()
+
+set(deploy_script "${CMAKE_CURRENT_BINARY_DIR}/deploy_${PROJECT_NAME}.cmake")
+
+file(GENERATE OUTPUT ${deploy_script} CONTENT "
+include(\"${QT_DEPLOY_SUPPORT}\")
+qt_deploy_runtime_dependencies(
+    EXECUTABLE \"${executable_path}\"
+    PLUGINS_DIR bin
+)"
+)
+
+install(TARGETS ${PROJECT_NAME} DESTINATION bin)
+install(SCRIPT ${deploy_script})
+
