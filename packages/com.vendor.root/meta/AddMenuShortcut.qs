@@ -38,7 +38,6 @@ Component.prototype.createOperations = function()
 
     if (systemInfo.productType === "windows") {
         component.addOperation("CreateShortcut", "@TargetDir@/bin/Download Sorter.exe", "@StartMenuDir@/Download Sorter.lnk",
-            "workingDirectory=@TargetDir@", "iconPath=%SystemRoot%/system32/SHELL32.dll",
-            "iconId=2", "description=Open README file");
+            "workingDirectory=@TargetDir@", "description=Open Download Sorter");
     }
 }
