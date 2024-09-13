@@ -3,3 +3,4 @@ build/
 build.ps1
 run-build.ps1
 build*/
+*Setup*.exe
