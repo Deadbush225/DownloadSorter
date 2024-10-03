@@ -73,72 +73,74 @@ void DownloadSorter::recalculateContents() {
         QDir::Files | QDir::NoDotAndDotDot | QDir::Dirs);
 }
 
-int DownloadSorter::moveContents(QMap<QString, QString> filesPerCategory) {
-    for (auto i = filesPerCategory.begin(), end = filesPerCategory.end();
-         i != end; ++i) {
-
-        qDebug() << "moving " << i.key() << " to " << i.value();
-
-        std::wstring originalPath = i.key().toStdWString();
-        std::wstring destinationPath = i.value().toStdWString();
-        LPCTSTR original = originalPath.c_str();
-        LPCTSTR destination = destinationPath.c_str();
-
-        qDebug() << "Original path: " << QString::fromStdWString(originalPath);
-        qDebug() << "Destination path: " << QString::fromStdWString(destinationPath);
-
-        if (_waccess(originalPath.c_str(), 0) != 0) {
-            qDebug() << "File does not exist: " << QString::fromStdWString(originalPath);
-            continue;
-        }
-
-        if (!MoveFile(original, destination)) {
-            DWORD error = GetLastError();
-            qDebug() << "MoveFile failed with error code: " << error;
-            // Handle specific errors if needed
-        } else {
-            qDebug() << "Successfully moved " << original << " to " << destination;
-        }
-    }
-
-    return 0;
-}
-
 // int DownloadSorter::moveContents(QMap<QString, QString> filesPerCategory) {
-//     // QMap<QString>
 //     for (auto i = filesPerCategory.begin(), end = filesPerCategory.end();
 //          i != end; ++i) {
-//         // QString OriginalLocation = i.key().absoluteFilePath();
-//         // QString FileName = i.key();
-
-//         // QString DestinationFolder =
-//         // this->downloadFolder.absolutePath() + "/" + i.value();
-//         // QString RenamedDestination =
-//         // DestinationFolder + "/" + FileName;  // add here the file name
-//         // QString OriginalLocation =
-//         // this->downloadFolder.absolutePath() + "/" + FileName;
 
 //         qDebug() << "moving " << i.key() << " to " << i.value();
 
-//         LPCTSTR original = i.key().toStdWString().c_str();
-//         LPCTSTR destination = i.value().toStdWString().c_str();
+//         std::wstring originalPath = i.key().toStdWString();
+//         std::wstring destinationPath = i.value().toStdWString();
+//         LPCTSTR original = originalPath.c_str();
+//         LPCTSTR destination = destinationPath.c_str();
 
-//         // MessageBox(NULL, original, TEXT("Error"), MB_OK);
+//         qDebug() << "Original path: " << QString::fromStdWString(originalPath);
+//         qDebug() << "Destination path: " << QString::fromStdWString(destinationPath);
 
-//         // QFile original = QFile(i.key());
-//         // QString destination = i.value();
+//         // if (_waccess(originalPath.c_str(), 0) != 0) {
+//         //     qDebug() << "File does not exist: " << QString::fromStdWString(originalPath);
+//         //     continue;
+//         // }
 
-//         auto ret = MoveFile((LPCTSTR)original, destination);
-//         ErrorExit(TEXT("MoveFile"));
-//         // auto ret = original.rename(destination);
-
-//         qDebug() << ret << " : moving " << original << " to " << destination;
-//         // qDebug() << "ERROR" << e;
-//         // qDebug() << " : moving " << original << " to " << destination;
+//         if (!MoveFile(original, destination)) {
+//             DWORD error = GetLastError();
+//             qDebug() << "MoveFile failed with error code: " << error;
+//             // Handle specific errors if needed
+//         } else {
+//             qDebug() << "Successfully moved " << original << " to " << destination;
+//         }
 //     }
 
 //     return 0;
 // }
+
+int DownloadSorter::moveContents(QMap<QString, QString> filesPerCategory) {
+    // QMap<QString>
+    for (auto i = filesPerCategory.begin(), end = filesPerCategory.end();
+         i != end; ++i) {
+        // QString OriginalLocation = i.key().absoluteFilePath();
+        // QString FileName = i.key();
+
+        // QString DestinationFolder =
+        // this->downloadFolder.absolutePath() + "/" + i.value();
+        // QString RenamedDestination =
+        // DestinationFolder + "/" + FileName;  // add here the file name
+        // QString OriginalLocation =
+        // this->downloadFolder.absolutePath() + "/" + FileName;
+
+        qDebug() << "moving " << i.key() << " to " << i.value();
+
+        std::wstring originalPath = i.key().toStdWString();
+        LPCTSTR original = originalPath.c_str();
+        std::wstring destinationPath = i.value().toStdWString();
+        LPCTSTR destination = destinationPath.c_str();
+
+        // MessageBox(NULL, original, TEXT("Error"), MB_OK);
+
+        // QFile original = QFile(i.key());
+        // QString destination = i.value();
+
+        auto ret = MoveFile(original, destination);
+        // ErrorExit(TEXT("MoveFile"));
+        // auto ret = original.rename(destination);
+
+        qDebug() << ret << " : moving " << original << " to " << destination;
+        // qDebug() << "ERROR" << e;
+        // qDebug() << " : moving " << original << " to " << destination;
+    }
+
+    return 0;
+}
 
 QMap<QString, QString> DownloadSorter::evaluateCategory() {
     // QList<QFileInfo> filteredContents;
