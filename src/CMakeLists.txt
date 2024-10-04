@@ -10,7 +10,7 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 # Turn on automatic invocation of the MOC, UIC & RCC
 set(CMAKE_AUTOMOC ON)
-# set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
 set(Boost_USE_STATIC_LIBS OFF)
@@ -28,12 +28,6 @@ file(GLOB_RECURSE DownloadSorter "DownloadSorter/*.cpp")
 set(SOURCE_FILES
     ${DownloadSorter}
     main.cpp
-    # DownloadSorter/subclass.cpp
-    # DashboardWidget.cpp
-
-    # ModQMap.cpp
-    # ModQComboBox.cpp
-    # FixedLabel.cpp
 )
 
 # add_executable(PrintingRates main.cpp DashboardWidget.cpp)
@@ -51,25 +45,21 @@ endif()
 # add_executable(Testsd ${SOURCE_FILES})
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_20)
 
-
 #---
-target_link_libraries(DownloadSorter PRIVATE Qt6::Widgets)
-target_link_libraries(DownloadSorter PRIVATE Qt6::Core)
+target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::Widgets)
+target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::Core)
 
-# target_link_libraries(Testsd PRIVATE Qt6::Widgets)
-# target_link_libraries(Testsd PRIVATE Qt6::Core)
 if(Boost_FOUND)
     message("Boost Found...")
-    target_include_directories(DownloadSorter PRIVATE ${Boost_INCLUDE_DIRS})
-    target_link_libraries(DownloadSorter PUBLIC ${Boost_LIBRARIES})
-    # target_link_libraries(${PROJECT_NAME} PUBLIC Boost::boost)
+    target_include_directories(${PROJECT_NAME} PRIVATE ${Boost_INCLUDE_DIRS})
+    target_link_libraries(${PROJECT_NAME} PUBLIC ${Boost_LIBRARIES})
 endif()
+
 # set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 # set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
 # include(CPack)
 
 # Install Scripts
-
 if(APPLE)
     set(executable_path "$<TARGET_FILE_NAME:${PROJECT_NAME}>.app")
 elseif(WIN32)

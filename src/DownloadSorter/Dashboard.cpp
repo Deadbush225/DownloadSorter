@@ -56,15 +56,6 @@ Dashboard::Dashboard() {
     mainlayout->addStretch(2);
     mainlayout->addWidget(arrangeButton);
 
-    // mainlayout->addWidget(label);
-    // mainlayout->addLayout(searcherlayout);
-
-    // mainlayout->setSpacing(0);
-    // groupbox->setLayout(browserlayout);
-
-    // mainlayout->addWidget(groupbox);
-    // mainlayout->insertStretch(-1, 10);
-
     QWidget* central_widget = new QWidget();
 
     this->setCentralWidget(central_widget);
@@ -78,18 +69,13 @@ Dashboard::Dashboard() {
 }
 
 void Dashboard::initiateSort() {
-    // qDebug() << "Initializing Sort: ";  // << *this->currentDownloadFolder;
-    // QString str = QString("E:/New folder");
     DownloadSorter* ds = new DownloadSorter(this->currentDownloadFolder);
-    // DownloadSorter* ds = new DownloadSorter(this->currentDownloadFolder);
-    QObject::connect(ds, &DownloadSorter::finished, this, &downloadFinished);
+    QObject::connect(ds, &DownloadSorter::finished, this, &Dashboard::downloadFinished);
 
     ds->start();
-    // ds->run();
 }
 
 void Dashboard::downloadFinished() {
-    // this->statusBar()->showMessage(QString("Finished: '1%'"), 5000);
     this->statusBar()->showMessage(
         QString("Finished: '%1'").arg(this->currentDownloadFolder), 5000);
 }

@@ -1,8 +1,4 @@
 #include "DownloadSorter.h"
-
-// QMap<QString, QList<QString>> fileTypesMap = {};
-// QMap<QString, int> t = ;
-
 #include <windows.h>
 #include <strsafe.h>
 
