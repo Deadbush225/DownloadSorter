@@ -1,0 +1,23 @@
+<Updates>
+ <ApplicationName>{AnyApplication}</ApplicationName>
+ <ApplicationVersion>1.0.0</ApplicationVersion>
+ <Checksum>true</Checksum>
+ <PackageUpdate>
+  <Name>com.vendor.root</Name>
+  <DisplayName>Download Sorter</DisplayName>
+  <Description>Main program</Description>
+  <Version>0.1.0-1</Version>
+  <ReleaseDate>2019-09-21</ReleaseDate>
+  <Default>script</Default>
+  <Script>AddMenuShortcut.qs</Script>
+  <UpdateFile CompressedSize="17448306" OS="Any" UncompressedSize="62744825"/>
+  <DownloadableArchives>bin.7z,plugins.7z,translations.7z</DownloadableArchives>
+  <UserInterfaces>page.ui</UserInterfaces>
+  <Licenses>
+   <License file="license.txt" name="Beer Public License Agreement"/>
+  </Licenses>
+  <SHA1>85233857f4df80b31d833970cb4d1ad965c68fc7</SHA1>
+ </PackageUpdate>
+ <SHA1>4b54bfe1a707f7e2b303dad5c30a9d401effd920</SHA1>
+ <MetadataName>2024-10-04-2315_meta.7z</MetadataName>
+</Updates>

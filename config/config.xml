@@ -8,4 +8,11 @@
     <InstallerWindowIcon>../src/icons/Download Sorter.png</InstallerWindowIcon>
     <InstallerApplicationIcon>../src/icons/Download Sorter</InstallerApplicationIcon>
     <TargetDir>@ApplicationsDirX64@/Download Sorter</TargetDir>
+    <RemoteRepositories>
+        <Repository>
+            <Url>https://raw.githubusercontent.com/Deadbush225/DownloadSorter/main/packages/com.vendor.root/meta/package.xml
+</Url>
+            <Enabled>1</Enabled>
+        </Repository>
+    </RemoteRepositories>
 </Installer>
