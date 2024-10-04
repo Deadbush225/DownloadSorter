@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 project(DownloadSorter VERSION 0.1.0)
 
-# file(GLOB_RECURSE HELPER_FILES "/src/HELPER/*.cpp")
-# file(GLOB_RECURSE INCLUDE_FILES "*.h")
 # CMAKE_PREFIX_PATH="C:/Qt/6.4.2/mingw_64"
 
 # Find includes in the build directories
