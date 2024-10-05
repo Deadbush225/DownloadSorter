@@ -8,10 +8,10 @@
     <InstallerWindowIcon>../src/icons/Download Sorter.png</InstallerWindowIcon>
     <InstallerApplicationIcon>../src/icons/Download Sorter</InstallerApplicationIcon>
     <TargetDir>@ApplicationsDirX64@/Download Sorter</TargetDir>
+    <MaintenanceToolName>DSMaintenanceTool</MaintenanceToolName>
     <RemoteRepositories>
         <Repository>
-            <Url>https://raw.githubusercontent.com/Deadbush225/DownloadSorter/main/packages/com.vendor.root/meta/package.xml
-</Url>
+            <Url>https://raw.githubusercontent.com/Deadbush225/DownloadSorter/main/repository</Url>
             <Enabled>1</Enabled>
         </Repository>
     </RemoteRepositories>
