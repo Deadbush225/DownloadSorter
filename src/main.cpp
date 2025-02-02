@@ -2,8 +2,8 @@
 #include <QtWidgets/QApplication>
 #include <iostream>
 
-#include "./DownloadSorter/Dashboard.h"
-#include "./DownloadSorter/DownloadSorter.h"
+#include "./Include/DownloadSorter/Dashboard.h"
+#include "./Include/DownloadSorter/DownloadSorter.h"
 
 int main(int argc, char* argv[]) {
     QApplication* app = new QApplication(argc, argv);

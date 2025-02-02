@@ -21,8 +21,8 @@ qt_standard_project_setup()
 
 find_package(Boost 1.81.0)
 
-file(GLOB_RECURSE SourceFiles "DownloadSorter/*.cpp")
-file(GLOB_RECURSE HeaderFiles "DownloadSorter/*.h")
+file(GLOB_RECURSE SourceFiles "./DownloadSorter/*.cpp")
+file(GLOB_RECURSE HeaderFiles "./Include/DownloadSorter/*.h")
 file(GLOB_RECURSE InstallerConfigs "../config/*.*")
 file(GLOB_RECURSE Packages "../packages/*.*")
 file(GLOB_RECURSE Scripts "../*.ps1")
@@ -40,7 +40,7 @@ set(SOURCE_FILES
 # add_executable(PrintingRates main.cpp DashboardWidget.cpp)
 #---
 set(app_icon_resource_windows "${CMAKE_CURRENT_SOURCE_DIR}/icons/Download Sorter.rc")
-add_executable(${PROJECT_NAME} ${SOURCE_FILES} ${app_icon_resource_windows} icons.qrc)
+add_executable(${PROJECT_NAME} ${SOURCE_FILES} ${app_icon_resource_windows} "./icons/icons.qrc")
 # include_directories("src/Utils" "Utils/")
 set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "Download Sorter")
 

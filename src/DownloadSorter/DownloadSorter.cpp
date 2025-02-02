@@ -1,33 +1,28 @@
-#include "DownloadSorter.h"
-#include <windows.h>
+#include "../Include/DownloadSorter/DownloadSorter.h"
 #include <strsafe.h>
+#include <windows.h>
 
-void ErrorExit(LPCTSTR lpszFunction)
-{
+void ErrorExit(LPCTSTR lpszFunction) {
     // Retrieve the system error message for the last-error code
 
     LPVOID lpMsgBuf;
     LPVOID lpDisplayBuf;
     DWORD dw = GetLastError();
 
-    FormatMessage(
-        FORMAT_MESSAGE_ALLOCATE_BUFFER |
-            FORMAT_MESSAGE_FROM_SYSTEM |
-            FORMAT_MESSAGE_IGNORE_INSERTS,
-        NULL,
-        dw,
-        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-        (LPTSTR) &lpMsgBuf,
-        0, NULL );
+    FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
+                      FORMAT_MESSAGE_IGNORE_INSERTS,
+                  NULL, dw, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                  (LPTSTR)&lpMsgBuf, 0, NULL);
 
     // Display the error message and exit the process
 
-    lpDisplayBuf = (LPVOID)LocalAlloc(LMEM_ZEROINIT,
-                                       (lstrlen((LPCTSTR)lpMsgBuf) + lstrlen((LPCTSTR)lpszFunction) + 40) * sizeof(TCHAR));
-    StringCchPrintf((LPTSTR)lpDisplayBuf,
-                    LocalSize(lpDisplayBuf) / sizeof(TCHAR),
-                    TEXT("%s failed with error %d: %s"),
-                    lpszFunction, dw, lpMsgBuf);
+    lpDisplayBuf = (LPVOID)LocalAlloc(
+        LMEM_ZEROINIT,
+        (lstrlen((LPCTSTR)lpMsgBuf) + lstrlen((LPCTSTR)lpszFunction) + 40) *
+            sizeof(TCHAR));
+    StringCchPrintf(
+        (LPTSTR)lpDisplayBuf, LocalSize(lpDisplayBuf) / sizeof(TCHAR),
+        TEXT("%s failed with error %d: %s"), lpszFunction, dw, lpMsgBuf);
     MessageBox(NULL, (LPCTSTR)lpDisplayBuf, TEXT("Error"), MB_OK);
 
     LocalFree(lpMsgBuf);
@@ -80,11 +75,13 @@ void DownloadSorter::recalculateContents() {
 //         LPCTSTR original = originalPath.c_str();
 //         LPCTSTR destination = destinationPath.c_str();
 
-//         qDebug() << "Original path: " << QString::fromStdWString(originalPath);
-//         qDebug() << "Destination path: " << QString::fromStdWString(destinationPath);
+//         qDebug() << "Original path: " <<
+//         QString::fromStdWString(originalPath); qDebug() << "Destination path:
+//         " << QString::fromStdWString(destinationPath);
 
 //         // if (_waccess(originalPath.c_str(), 0) != 0) {
-//         //     qDebug() << "File does not exist: " << QString::fromStdWString(originalPath);
+//         //     qDebug() << "File does not exist: " <<
+//         QString::fromStdWString(originalPath);
 //         //     continue;
 //         // }
 
@@ -93,7 +90,8 @@ void DownloadSorter::recalculateContents() {
 //             qDebug() << "MoveFile failed with error code: " << error;
 //             // Handle specific errors if needed
 //         } else {
-//             qDebug() << "Successfully moved " << original << " to " << destination;
+//             qDebug() << "Successfully moved " << original << " to " <<
+//             destination;
 //         }
 //     }
 
@@ -187,8 +185,9 @@ QMap<QString, QString> DownloadSorter::evaluateCategory() {
         while (QFileInfo(RenamedDestination).exists()) {
             qDebug() << "[Duplicate Found] Renaming ... " << RenamedDestination;
 
-            std::string diff = baseName.toStdString() +
-                std::string(" (") + std::to_string(counter) + std::string(").") + suffixName.toStdString();
+            std::string diff = baseName.toStdString() + std::string(" (") +
+                               std::to_string(counter) + std::string(").") +
+                               suffixName.toStdString();
             RenamedDestination = DestinationFolder + '/' + diff.c_str();
             counter++;
         }

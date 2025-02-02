@@ -1,4 +1,4 @@
-#include "Dashboard.h"
+#include "../Include/DownloadSorter/Dashboard.h"
 // #include "subclass.h"
 
 Dashboard::Dashboard() {
@@ -29,7 +29,7 @@ Dashboard::Dashboard() {
 
     // QLineEdit* pathField = new QLineEdit();
 
-    QIcon* search_icon = new QIcon(":/icons/search.png");
+    QIcon* search_icon = new QIcon(":/search.png");
     QPushButton* search_btn = new QPushButton(*search_icon, "");
     QObject::connect(search_btn, QPushButton::clicked, this,
                      Dashboard::browseDownloadFolder);
@@ -70,7 +70,8 @@ Dashboard::Dashboard() {
 
 void Dashboard::initiateSort() {
     DownloadSorter* ds = new DownloadSorter(this->currentDownloadFolder);
-    QObject::connect(ds, &DownloadSorter::finished, this, &Dashboard::downloadFinished);
+    QObject::connect(ds, &DownloadSorter::finished, this,
+                     &Dashboard::downloadFinished);
 
     ds->start();
 }

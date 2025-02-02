@@ -1,3 +1,1 @@
-Remove-Item -Path ./repository -Recurse
-
-Start-Process -FilePath repogen.exe -ArgumentList ( "-p packages repository")
+Start-Process -FilePath repogen.exe -ArgumentList ( "-p packages --update-new-components -i com.vendor.root repository")

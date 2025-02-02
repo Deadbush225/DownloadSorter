@@ -1,4 +1,4 @@
-#include "subclass.h"
+#include "../Include/DownloadSorter/subclass.h"
 
 /* +++++ ModQLabel +++++ */
 ModQLabel::ModQLabel(QString str) : QLabel(str) {
