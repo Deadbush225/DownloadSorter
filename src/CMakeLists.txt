@@ -45,7 +45,7 @@ add_executable(${PROJECT_NAME} ${SOURCE_FILES} ${app_icon_resource_windows} "./i
 # include_directories("src/Utils" "Utils/")
 set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "Download Sorter")
 
-if(CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_BUILD_TYPE STREQUAL "MinSizeRel")
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
     set_property(TARGET ${PROJECT_NAME} PROPERTY WIN32_EXECUTABLE true)
 endif()
 
@@ -62,7 +62,7 @@ set(INSTALL_DIR "${CMAKE_SOURCE_DIR}/../install")
 # Keep default install() using this prefix (overridden by --prefix below if needed)
 set(CMAKE_INSTALL_PREFIX "${INSTALL_DIR}" CACHE PATH "Install prefix" FORCE)
 
-# Install Scripts
+# Install Scripts (Installed in Bin directory for win and linux)
 if(APPLE)
     set(executable_path "$<TARGET_FILE_NAME:${PROJECT_NAME}>.app")
 elseif(WIN32)
