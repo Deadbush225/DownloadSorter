@@ -16,6 +16,11 @@
 
 #include <QtWidgets/QGroupBox>
 
+// New UI pieces for menu and progress bar
+#include <QtWidgets/QProgressBar>
+class QAction;
+class QMenu;
+
 #include "DownloadSorter.h"
 #include "subclass.h"
 
@@ -37,6 +42,15 @@ class Dashboard : public QMainWindow {
 
     void initiateSort();
     void downloadFinished();
+
+    // Menu action and a status-bar progress bar
+    QMenu* rulesMenu = nullptr;
+    QAction* configureRulesAction = nullptr;
+    QProgressBar* progressBar = nullptr;
+
+    // Helpers
+    void onSortStarted();
+    void openRulesConfigurator();
 
    public slots:
     void browseDownloadFolder();

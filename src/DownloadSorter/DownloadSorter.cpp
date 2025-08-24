@@ -109,14 +109,17 @@ static QMap<QString, QList<QString>> defaultSeed() {
 // Active rules helpers (single array format)
 static QMap<QString, QList<QString>> parseArrayDoc(const QJsonDocument& doc) {
     QMap<QString, QList<QString>> map;
-    if (!doc.isArray()) return map;
+    if (!doc.isArray())
+        return map;
     for (const auto& v : doc.array()) {
         const auto obj = v.toObject();
         const QString folder = obj.value(QStringLiteral("folder")).toString();
         QList<QString> exts;
-        for (const auto& ev : obj.value(QStringLiteral("extensions")).toArray()) {
+        for (const auto& ev :
+             obj.value(QStringLiteral("extensions")).toArray()) {
             const QString e = ev.toString().toLower();
-            if (!e.isEmpty() && !exts.contains(e)) exts.push_back(e);
+            if (!e.isEmpty() && !exts.contains(e))
+                exts.push_back(e);
         }
         if (!folder.isEmpty() && !exts.isEmpty())
             map.insert(folder, exts);
@@ -130,12 +133,14 @@ static bool saveActiveMappings(const QMap<QString, QList<QString>>& map) {
         QJsonObject o;
         o.insert(QStringLiteral("folder"), it.key());
         QJsonArray exts;
-        for (const auto& e : it.value()) exts.push_back(e.toLower());
+        for (const auto& e : it.value())
+            exts.push_back(e.toLower());
         o.insert(QStringLiteral("extensions"), exts);
         arr.push_back(o);
     }
     QFile f(mappingsConfigPath());
-    if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate)) return false;
+    if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate))
+        return false;
     const auto bytes = QJsonDocument(arr).toJson(QJsonDocument::Indented);
     const bool ok = f.write(bytes) == bytes.size();
     f.close();
@@ -159,14 +164,16 @@ static QMap<QString, QList<QString>> loadActiveMappings() {
 
     if (doc.isArray()) {
         const auto map = parseArrayDoc(doc);
-        if (!map.isEmpty()) return map;
+        if (!map.isEmpty())
+            return map;
         auto seed = defaultSeed();
         saveActiveMappings(seed);
         return seed;
     }
 
     if (doc.isObject()) {
-        // Legacy: choose custom if present, otherwise defaults; convert to active
+        // Legacy: choose custom if present, otherwise defaults; convert to
+        // active
         const auto custom = readSection("custom");
         const auto defs = readSection("defaults");
         const auto chosen = custom.isEmpty() ? defs : custom;
@@ -228,10 +235,17 @@ void DownloadSorter::run() {
     this->contents =
         this->downloadFolder.entryInfoList(QDir::Files | QDir::NoDotAndDotDot);
 
-    this->moveContents(this->evaluateCategory());
+    const auto plan = this->evaluateCategory();
+    if (plan.isEmpty()) {
+        emit statusMessage(QStringLiteral("Nothing to move."));
+        // Nudge the progress bar to finished instantly
+        emit progressRangeChanged(0, 1);
+        emit progressValueChanged(1);
+        return;
+    }
 
-    // emit fine("Done");
-    // emit finished(this->downloadFolder.absolutePath());
+    emit statusMessage(QStringLiteral("Moving %1 files...").arg(plan.size()));
+    this->moveContents(plan);
 }
 
 void DownloadSorter::recalculateContents() {
@@ -275,12 +289,15 @@ void DownloadSorter::recalculateContents() {
 // }
 
 int DownloadSorter::moveContents(QMap<QString, QString> filesPerCategory) {
-    // QMap<QString>
+    const int total = filesPerCategory.size();
+    emit progressRangeChanged(0, total);
+    int done = 0;
+    emit progressValueChanged(done);
+
     for (auto i = filesPerCategory.begin(), end = filesPerCategory.end();
          i != end; ++i) {
         // QString OriginalLocation = i.key().absoluteFilePath();
         // QString FileName = i.key();
-
         // QString DestinationFolder =
         // this->downloadFolder.absolutePath() + "/" + i.value();
         // QString RenamedDestination =
@@ -295,20 +312,14 @@ int DownloadSorter::moveContents(QMap<QString, QString> filesPerCategory) {
         std::wstring destinationPath = i.value().toStdWString();
         LPCTSTR destination = destinationPath.c_str();
 
-        // MessageBox(NULL, original, TEXT("Error"), MB_OK);
-
-        // QFile original = QFile(i.key());
-        // QString destination = i.value();
-
         auto ret = MoveFile(original, destination);
-        // ErrorExit(TEXT("MoveFile"));
-        // auto ret = original.rename(destination);
-
         qDebug() << ret << " : moving " << original << " to " << destination;
-        // qDebug() << "ERROR" << e;
-        // qDebug() << " : moving " << original << " to " << destination;
+
+        done++;
+        emit progressValueChanged(done);
     }
 
+    emit statusMessage(QStringLiteral("Done."));
     return 0;
 }
 

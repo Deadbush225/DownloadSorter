@@ -70,7 +70,7 @@ endif()
 # include(CPack)
 
 # Local install directory inside the project
-set(INSTALL_DIR "${CMAKE_SOURCE_DIR}/install")
+set(INSTALL_DIR "${CMAKE_SOURCE_DIR}/../install")
 
 # Keep default install() using this prefix (overridden by --prefix below if needed)
 set(CMAKE_INSTALL_PREFIX "${INSTALL_DIR}" CACHE PATH "Install prefix" FORCE)

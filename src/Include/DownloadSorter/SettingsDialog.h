@@ -48,6 +48,7 @@ class SettingsDialog : public QDialog {
 
 inline SettingsDialog::SettingsDialog(QWidget* parent) : QDialog(parent) {
     setupUi();
+    setFixedWidth(600);
 }
 
 inline void SettingsDialog::setupUi() {
@@ -67,6 +68,8 @@ inline void SettingsDialog::setupUi() {
         {QStringLiteral("Folder"), QStringLiteral("Extensions")});
     table->horizontalHeader()->setStretchLastSection(true);
     table->verticalHeader()->setVisible(false);
+    table->horizontalHeader()->setSectionResizeMode(
+        0, QHeaderView::ResizeToContents);
     table->setSelectionBehavior(QAbstractItemView::SelectRows);
     table->setSelectionMode(QAbstractItemView::SingleSelection);
     layout->addWidget(table);
