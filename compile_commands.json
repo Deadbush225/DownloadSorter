@@ -1,0 +1,56 @@
+[
+{
+  "directory": "D:/System/Coding/Projects/download-sorter/build",
+  "command": "C:\\Dev\\Qt\\Tools\\mingw1120_64\\bin\\g++.exe -DMINGW_HAS_SECURE_API=1 -DQT_CORE_LIB -DQT_GUI_LIB -DQT_WIDGETS_LIB -DUNICODE -DWIN32 -DWIN64 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_UNICODE -D_WIN64 -ID:/System/Coding/Projects/download-sorter/build -ID:/System/Coding/Projects/download-sorter/src -ID:/System/Coding/Projects/download-sorter/build/DownloadSorter_autogen/include -isystem C:/Dev/Qt/6.7.3/mingw_64/include/QtWidgets -isystem C:/Dev/Qt/6.7.3/mingw_64/include -isystem C:/Dev/Qt/6.7.3/mingw_64/include/QtCore -isystem C:/Dev/Qt/6.7.3/mingw_64/mkspecs/win32-g++ -isystem C:/Dev/Qt/6.7.3/mingw_64/include/QtGui -g -std=gnu++20 -o CMakeFiles\\DownloadSorter.dir\\DownloadSorter_autogen\\mocs_compilation.cpp.obj -c D:\\System\\Coding\\Projects\\download-sorter\\build\\DownloadSorter_autogen\\mocs_compilation.cpp",
+  "file": "D:\\System\\Coding\\Projects\\download-sorter\\build\\DownloadSorter_autogen\\mocs_compilation.cpp",
+  "output": "CMakeFiles\\DownloadSorter.dir\\DownloadSorter_autogen\\mocs_compilation.cpp.obj"
+},
+{
+  "directory": "D:/System/Coding/Projects/download-sorter/build",
+  "command": "C:\\Dev\\Qt\\Tools\\mingw1120_64\\bin\\g++.exe -DMINGW_HAS_SECURE_API=1 -DQT_CORE_LIB -DQT_GUI_LIB -DQT_WIDGETS_LIB -DUNICODE -DWIN32 -DWIN64 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_UNICODE -D_WIN64 -ID:/System/Coding/Projects/download-sorter/build -ID:/System/Coding/Projects/download-sorter/src -ID:/System/Coding/Projects/download-sorter/build/DownloadSorter_autogen/include -isystem C:/Dev/Qt/6.7.3/mingw_64/include/QtWidgets -isystem C:/Dev/Qt/6.7.3/mingw_64/include -isystem C:/Dev/Qt/6.7.3/mingw_64/include/QtCore -isystem C:/Dev/Qt/6.7.3/mingw_64/mkspecs/win32-g++ -isystem C:/Dev/Qt/6.7.3/mingw_64/include/QtGui -g -std=gnu++20 -o CMakeFiles\\DownloadSorter.dir\\main.cpp.obj -c D:\\System\\Coding\\Projects\\download-sorter\\src\\main.cpp",
+  "file": "D:\\System\\Coding\\Projects\\download-sorter\\src\\main.cpp",
+  "output": "CMakeFiles\\DownloadSorter.dir\\main.cpp.obj"
+},
+{
+  "directory": "D:/System/Coding/Projects/download-sorter/build",
+  "command": "C:\\Dev\\Qt\\Tools\\mingw1120_64\\bin\\g++.exe -DMINGW_HAS_SECURE_API=1 -DQT_CORE_LIB -DQT_GUI_LIB -DQT_WIDGETS_LIB -DUNICODE -DWIN32 -DWIN64 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_UNICODE -D_WIN64 -ID:/System/Coding/Projects/download-sorter/build -ID:/System/Coding/Projects/download-sorter/src -ID:/System/Coding/Projects/download-sorter/build/DownloadSorter_autogen/include -isystem C:/Dev/Qt/6.7.3/mingw_64/include/QtWidgets -isystem C:/Dev/Qt/6.7.3/mingw_64/include -isystem C:/Dev/Qt/6.7.3/mingw_64/include/QtCore -isystem C:/Dev/Qt/6.7.3/mingw_64/mkspecs/win32-g++ -isystem C:/Dev/Qt/6.7.3/mingw_64/include/QtGui -g -std=gnu++20 -o CMakeFiles\\DownloadSorter.dir\\DownloadSorter\\Dashboard.cpp.obj -c D:\\System\\Coding\\Projects\\download-sorter\\src\\DownloadSorter\\Dashboard.cpp",
+  "file": "D:\\System\\Coding\\Projects\\download-sorter\\src\\DownloadSorter\\Dashboard.cpp",
+  "output": "CMakeFiles\\DownloadSorter.dir\\DownloadSorter\\Dashboard.cpp.obj"
+},
+{
+  "directory": "D:/System/Coding/Projects/download-sorter/build",
+  "command": "C:\\Dev\\Qt\\Tools\\mingw1120_64\\bin\\g++.exe -DMINGW_HAS_SECURE_API=1 -DQT_CORE_LIB -DQT_GUI_LIB -DQT_WIDGETS_LIB -DUNICODE -DWIN32 -DWIN64 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_UNICODE -D_WIN64 -ID:/System/Coding/Projects/download-sorter/build -ID:/System/Coding/Projects/download-sorter/src -ID:/System/Coding/Projects/download-sorter/build/DownloadSorter_autogen/include -isystem C:/Dev/Qt/6.7.3/mingw_64/include/QtWidgets -isystem C:/Dev/Qt/6.7.3/mingw_64/include -isystem C:/Dev/Qt/6.7.3/mingw_64/include/QtCore -isystem C:/Dev/Qt/6.7.3/mingw_64/mkspecs/win32-g++ -isystem C:/Dev/Qt/6.7.3/mingw_64/include/QtGui -g -std=gnu++20 -o CMakeFiles\\DownloadSorter.dir\\DownloadSorter\\DownloadSorter.cpp.obj -c D:\\System\\Coding\\Projects\\download-sorter\\src\\DownloadSorter\\DownloadSorter.cpp",
+  "file": "D:\\System\\Coding\\Projects\\download-sorter\\src\\DownloadSorter\\DownloadSorter.cpp",
+  "output": "CMakeFiles\\DownloadSorter.dir\\DownloadSorter\\DownloadSorter.cpp.obj"
+},
+{
+  "directory": "D:/System/Coding/Projects/download-sorter/build",
+  "command": "C:\\Dev\\Qt\\Tools\\mingw1120_64\\bin\\g++.exe -DMINGW_HAS_SECURE_API=1 -DQT_CORE_LIB -DQT_GUI_LIB -DQT_WIDGETS_LIB -DUNICODE -DWIN32 -DWIN64 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_UNICODE -D_WIN64 -ID:/System/Coding/Projects/download-sorter/build -ID:/System/Coding/Projects/download-sorter/src -ID:/System/Coding/Projects/download-sorter/build/DownloadSorter_autogen/include -isystem C:/Dev/Qt/6.7.3/mingw_64/include/QtWidgets -isystem C:/Dev/Qt/6.7.3/mingw_64/include -isystem C:/Dev/Qt/6.7.3/mingw_64/include/QtCore -isystem C:/Dev/Qt/6.7.3/mingw_64/mkspecs/win32-g++ -isystem C:/Dev/Qt/6.7.3/mingw_64/include/QtGui -g -std=gnu++20 -o CMakeFiles\\DownloadSorter.dir\\DownloadSorter\\ProgressDialog.cpp.obj -c D:\\System\\Coding\\Projects\\download-sorter\\src\\DownloadSorter\\ProgressDialog.cpp",
+  "file": "D:\\System\\Coding\\Projects\\download-sorter\\src\\DownloadSorter\\ProgressDialog.cpp",
+  "output": "CMakeFiles\\DownloadSorter.dir\\DownloadSorter\\ProgressDialog.cpp.obj"
+},
+{
+  "directory": "D:/System/Coding/Projects/download-sorter/build",
+  "command": "C:\\Dev\\Qt\\Tools\\mingw1120_64\\bin\\g++.exe -DMINGW_HAS_SECURE_API=1 -DQT_CORE_LIB -DQT_GUI_LIB -DQT_WIDGETS_LIB -DUNICODE -DWIN32 -DWIN64 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_UNICODE -D_WIN64 -ID:/System/Coding/Projects/download-sorter/build -ID:/System/Coding/Projects/download-sorter/src -ID:/System/Coding/Projects/download-sorter/build/DownloadSorter_autogen/include -isystem C:/Dev/Qt/6.7.3/mingw_64/include/QtWidgets -isystem C:/Dev/Qt/6.7.3/mingw_64/include -isystem C:/Dev/Qt/6.7.3/mingw_64/include/QtCore -isystem C:/Dev/Qt/6.7.3/mingw_64/mkspecs/win32-g++ -isystem C:/Dev/Qt/6.7.3/mingw_64/include/QtGui -g -std=gnu++20 -o CMakeFiles\\DownloadSorter.dir\\DownloadSorter\\SettingsDialog.cpp.obj -c D:\\System\\Coding\\Projects\\download-sorter\\src\\DownloadSorter\\SettingsDialog.cpp",
+  "file": "D:\\System\\Coding\\Projects\\download-sorter\\src\\DownloadSorter\\SettingsDialog.cpp",
+  "output": "CMakeFiles\\DownloadSorter.dir\\DownloadSorter\\SettingsDialog.cpp.obj"
+},
+{
+  "directory": "D:/System/Coding/Projects/download-sorter/build",
+  "command": "C:\\Dev\\Qt\\Tools\\mingw1120_64\\bin\\g++.exe -DMINGW_HAS_SECURE_API=1 -DQT_CORE_LIB -DQT_GUI_LIB -DQT_WIDGETS_LIB -DUNICODE -DWIN32 -DWIN64 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_UNICODE -D_WIN64 -ID:/System/Coding/Projects/download-sorter/build -ID:/System/Coding/Projects/download-sorter/src -ID:/System/Coding/Projects/download-sorter/build/DownloadSorter_autogen/include -isystem C:/Dev/Qt/6.7.3/mingw_64/include/QtWidgets -isystem C:/Dev/Qt/6.7.3/mingw_64/include -isystem C:/Dev/Qt/6.7.3/mingw_64/include/QtCore -isystem C:/Dev/Qt/6.7.3/mingw_64/mkspecs/win32-g++ -isystem C:/Dev/Qt/6.7.3/mingw_64/include/QtGui -g -std=gnu++20 -o CMakeFiles\\DownloadSorter.dir\\DownloadSorter\\subclass.cpp.obj -c D:\\System\\Coding\\Projects\\download-sorter\\src\\DownloadSorter\\subclass.cpp",
+  "file": "D:\\System\\Coding\\Projects\\download-sorter\\src\\DownloadSorter\\subclass.cpp",
+  "output": "CMakeFiles\\DownloadSorter.dir\\DownloadSorter\\subclass.cpp.obj"
+},
+{
+  "directory": "D:/System/Coding/Projects/download-sorter/build",
+  "command": "C:\\Dev\\Qt\\Tools\\mingw1120_64\\bin\\windres.exe -O coff -DMINGW_HAS_SECURE_API=1 -DQT_CORE_LIB -DQT_GUI_LIB -DQT_WIDGETS_LIB -DUNICODE -DWIN32 -DWIN64 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_UNICODE -D_WIN64 -I D:/System/Coding/Projects/download-sorter/build -I D:/System/Coding/Projects/download-sorter/src -I D:/System/Coding/Projects/download-sorter/build/DownloadSorter_autogen/include -I C:/Dev/Qt/6.7.3/mingw_64/include/QtWidgets -I C:/Dev/Qt/6.7.3/mingw_64/include -I C:/Dev/Qt/6.7.3/mingw_64/include/QtCore -I C:/Dev/Qt/6.7.3/mingw_64/mkspecs/win32-g++ -I C:/Dev/Qt/6.7.3/mingw_64/include/QtGui \"D:\\System\\Coding\\Projects\\download-sorter\\src\\icons\\Download Sorter.rc\" CMakeFiles\\DownloadSorter.dir\\icons\\Download_Sorter.rc.obj",
+  "file": "D:\\System\\Coding\\Projects\\download-sorter\\src\\icons\\Download Sorter.rc",
+  "output": "CMakeFiles\\DownloadSorter.dir\\icons\\Download_Sorter.rc.obj"
+},
+{
+  "directory": "D:/System/Coding/Projects/download-sorter/build",
+  "command": "C:\\Dev\\Qt\\Tools\\mingw1120_64\\bin\\g++.exe -DMINGW_HAS_SECURE_API=1 -DQT_CORE_LIB -DQT_GUI_LIB -DQT_WIDGETS_LIB -DUNICODE -DWIN32 -DWIN64 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_UNICODE -D_WIN64 -ID:/System/Coding/Projects/download-sorter/build -ID:/System/Coding/Projects/download-sorter/src -ID:/System/Coding/Projects/download-sorter/build/DownloadSorter_autogen/include -isystem C:/Dev/Qt/6.7.3/mingw_64/include/QtWidgets -isystem C:/Dev/Qt/6.7.3/mingw_64/include -isystem C:/Dev/Qt/6.7.3/mingw_64/include/QtCore -isystem C:/Dev/Qt/6.7.3/mingw_64/mkspecs/win32-g++ -isystem C:/Dev/Qt/6.7.3/mingw_64/include/QtGui -g -std=gnu++20 -o CMakeFiles\\DownloadSorter.dir\\DownloadSorter_autogen\\2SEMU33LXP\\qrc_icons.cpp.obj -c D:\\System\\Coding\\Projects\\download-sorter\\build\\DownloadSorter_autogen\\2SEMU33LXP\\qrc_icons.cpp",
+  "file": "D:\\System\\Coding\\Projects\\download-sorter\\build\\DownloadSorter_autogen\\2SEMU33LXP\\qrc_icons.cpp",
+  "output": "CMakeFiles\\DownloadSorter.dir\\DownloadSorter_autogen\\2SEMU33LXP\\qrc_icons.cpp.obj"
+}
+]
