@@ -37,7 +37,19 @@ class DownloadSorter : public QThread {
 
     void run();
 
-    // QMap<QString, QList<QString>> fileTypesMap;
+    // Add: configure mappings at runtime
+    void setFileTypesMap(const QMap<QString, QList<QString>>& map) {
+        fileTypesMap = map;
+    }
+    const QMap<QString, QList<QString>>& getFileTypesMap() const {
+        return fileTypesMap;
+    }
+
+   signals:
+    // Progress bar and status signals
+    void progressRangeChanged(int minimum, int maximum);
+    void progressValueChanged(int value);
+    void statusMessage(const QString& message);
 
    private:
     QDir downloadFolder;
