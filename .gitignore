@@ -3,4 +3,6 @@ build/
 build.ps1
 run-build.ps1
 build*/
-*Setup*.exe
+*.exe
+compile_commands.json
+release_notes.md
