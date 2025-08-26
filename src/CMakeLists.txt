@@ -66,9 +66,9 @@ set(CMAKE_INSTALL_PREFIX "${INSTALL_DIR}" CACHE PATH "Install prefix" FORCE)
 if(APPLE)
     set(executable_path "$<TARGET_FILE_NAME:${PROJECT_NAME}>.app")
 elseif(WIN32)
-    set(executable_path "\${QT_DEPLOY_BIN_DIR}/$<TARGET_FILE_NAME:${PROJECT_NAME}>")
+    set(executable_path "$<TARGET_FILE_NAME:${PROJECT_NAME}>")
 else()
-    set(executable_path "\${QT_DEPLOY_BIN_DIR}/$<TARGET_FILE_NAME:${PROJECT_NAME}>")
+    set(executable_path "$<TARGET_FILE_NAME:${PROJECT_NAME}>")
 endif()
 
 # Harder compression for Qt resources
@@ -87,6 +87,10 @@ endif()
 # Create the runtime deploy script, that gathers all the dependencies. Equivalent of "windeployqt", but with filters
 set(deploy_script "${CMAKE_CURRENT_BINARY_DIR}/deploy_${PROJECT_NAME}.cmake")
 file(GENERATE OUTPUT "${deploy_script}" CONTENT "
+set(QT_DEPLOY_BIN_DIR \".\")
+set(QT_DEPLOY_LIB_DIR \".\")
+set(QT_DEPLOY_PLUGINS_DIR \".\")  # optional when passing PLUGINS_DIR
+
 # This file is generated at generate-time and executed at install time
 set(QT_DEPLOY_EXCLUDE_MODULES \"Network;NetworkInformation;NetworkAuth\")
 set(QT_DEPLOY_EXCLUDE_PLUGINS \"tls;*;networkinformation;*;bearer;*;imageformats;qgif;qjpeg;qsvg;qsvgicon;generic;qtuiotouchplugin;\")
@@ -95,13 +99,13 @@ set(QT_DEPLOY_PLUGINS \"platforms;qwindows\")
 include(\"${QT_DEPLOY_SUPPORT}\")
 qt_deploy_runtime_dependencies(
     EXECUTABLE \"${executable_path}\"
-    PLUGINS_DIR bin
+    PLUGINS_DIR .
     NO_TRANSLATIONS
 )
 ")
 
 # Install the app (goes to ${INSTALL_DIR}/bin) and deploy Qt runtime deps
-install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin)
+install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION .)
 install(SCRIPT ${deploy_script})
 
 # Prune optional/banned bits that may remain or from previous installs using a script file
@@ -109,7 +113,7 @@ install(SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/cmake/PruneInstall.cmake")
 
 # Convenience target: copy to install and run deploy (strip in Release/MinSizeRel)
 add_custom_target(install_local
-    COMMAND ${CMAKE_COMMAND} -E rm -rf "${INSTALL_DIR}/bin"
+    COMMAND ${CMAKE_COMMAND} -E rm -rf "${INSTALL_DIR}/."
     COMMAND ${CMAKE_COMMAND} --install "${CMAKE_BINARY_DIR}" --prefix "${INSTALL_DIR}" $<$<BOOL:${CMAKE_CONFIGURATION_TYPES}>:--config> $<$<BOOL:${CMAKE_CONFIGURATION_TYPES}>:$<CONFIG>> $<$<OR:$<CONFIG:Release>,$<CONFIG:MinSizeRel>>:--strip>
     DEPENDS ${PROJECT_NAME}
     COMMENT "Installing to ${INSTALL_DIR} and deploying Qt runtime dependencies"
