@@ -1,5 +1,6 @@
 <RCC>
     <qresource prefix="/">
         <file>search.png</file>
+        <file alias="appicon">Download Sorter.ico</file>
     </qresource>
 </RCC>

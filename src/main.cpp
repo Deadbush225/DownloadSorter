@@ -1,4 +1,5 @@
 #include <QtCore/QString>
+#include <QtGui/QIcon>
 #include <QtWidgets/QApplication>
 #include <iostream>
 
@@ -7,6 +8,9 @@
 
 int main(int argc, char* argv[]) {
     QApplication* app = new QApplication(argc, argv);
+    // Set app-wide icon (used by taskbar/dock)
+
+    app->setWindowIcon(QIcon(":/appicon"));
 
     // DownloadSorter* ds = new DownloadSorter("E:/Downloads");
 

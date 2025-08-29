@@ -1,9 +1,12 @@
 cmake_minimum_required(VERSION 3.16)
 project(DownloadSorter VERSION 0.1.0)
 
-set(CMAKE_PREFIX_PATH "C:/Dev/Qt/6.7.3/mingw_64")
-set(CMAKE_C_COMPILER "C:/Dev/Qt/Tools/mingw1120_64/bin/gcc.exe")
-set(CMAKE_CXX_COMPILER "C:/Dev/Qt/Tools/mingw1120_64/bin/g++.exe")
+if(WIN32)
+    # add_definitions(-DPLATFORM_WINDOWS)
+    set(CMAKE_PREFIX_PATH "C:/Dev/Qt/6.7.3/mingw_64")
+    set(CMAKE_C_COMPILER "C:/Dev/Qt/Tools/mingw1120_64/bin/gcc.exe")
+    set(CMAKE_CXX_COMPILER "C:/Dev/Qt/Tools/mingw1120_64/bin/g++.exe")
+endif()
 
 # Find includes in the build directories
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
@@ -39,13 +42,20 @@ set(SOURCE_FILES
 
 # add_executable(PrintingRates main.cpp DashboardWidget.cpp)
 # ---
-set(app_icon_resource_windows "${CMAKE_CURRENT_SOURCE_DIR}/icons/Download Sorter.rc")
+# Add Windows icon resource only on Windows
+set(app_icon_resource_windows "")
+
+if(WIN32)
+    set(app_icon_resource_windows "${CMAKE_CURRENT_SOURCE_DIR}/icons/Download Sorter.rc")
+endif()
+
 add_executable(${PROJECT_NAME} ${SOURCE_FILES} ${app_icon_resource_windows} "./icons/icons.qrc")
 
 # include_directories("src/Utils" "Utils/")
 set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "Download Sorter")
 
-if(CMAKE_BUILD_TYPE STREQUAL "Release")
+# Set GUI subsystem only for Windows release builds
+if(WIN32 AND CMAKE_BUILD_TYPE STREQUAL "Release")
     set_property(TARGET ${PROJECT_NAME} PROPERTY WIN32_EXECUTABLE true)
 endif()
 
@@ -61,6 +71,15 @@ set(INSTALL_DIR "${CMAKE_SOURCE_DIR}/../install")
 
 # Keep default install() using this prefix (overridden by --prefix below if needed)
 set(CMAKE_INSTALL_PREFIX "${INSTALL_DIR}" CACHE PATH "Install prefix" FORCE)
+
+# Choose platform plugins to deploy per OS
+if(WIN32)
+    set(QT_DEPLOY_PLUGINS_LIST "platforms;qwindows")
+    set(QT_DEPLOY_EXCLUDE_LIBS_LIST "Qt6Network;D3DCompiler_47")
+else()
+    set(QT_DEPLOY_PLUGINS_LIST "platforms;qxcb")
+    set(QT_DEPLOY_EXCLUDE_LIBS_LIST "Qt6Network")
+endif()
 
 # Install Scripts (Installed in Bin directory for win and linux)
 if(APPLE)
@@ -94,8 +113,8 @@ set(QT_DEPLOY_PLUGINS_DIR \".\")  # optional when passing PLUGINS_DIR
 # This file is generated at generate-time and executed at install time
 set(QT_DEPLOY_EXCLUDE_MODULES \"Network;NetworkInformation;NetworkAuth\")
 set(QT_DEPLOY_EXCLUDE_PLUGINS \"tls;*;networkinformation;*;bearer;*;imageformats;qgif;qjpeg;qsvg;qsvgicon;generic;qtuiotouchplugin;\")
-set(QT_DEPLOY_EXCLUDE_LIBRARIES \"Qt6Network;D3DCompiler_47\")
-set(QT_DEPLOY_PLUGINS \"platforms;qwindows\")
+set(QT_DEPLOY_EXCLUDE_LIBRARIES \"${QT_DEPLOY_EXCLUDE_LIBS_LIST}\")
+set(QT_DEPLOY_PLUGINS \"${QT_DEPLOY_PLUGINS_LIST}\")
 include(\"${QT_DEPLOY_SUPPORT}\")
 qt_deploy_runtime_dependencies(
     EXECUTABLE \"${executable_path}\"

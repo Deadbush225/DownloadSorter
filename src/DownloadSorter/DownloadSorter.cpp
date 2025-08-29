@@ -1,6 +1,4 @@
 #include "../Include/DownloadSorter/DownloadSorter.h"
-#include <strsafe.h>
-#include <windows.h>
 #include <QFile>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -189,34 +187,6 @@ static QMap<QString, QList<QString>> loadActiveMappings() {
 }
 }  // namespace
 
-void ErrorExit(LPCTSTR lpszFunction) {
-    // Retrieve the system error message for the last-error code
-
-    LPVOID lpMsgBuf;
-    LPVOID lpDisplayBuf;
-    DWORD dw = GetLastError();
-
-    FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
-                      FORMAT_MESSAGE_IGNORE_INSERTS,
-                  NULL, dw, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-                  (LPTSTR)&lpMsgBuf, 0, NULL);
-
-    // Display the error message and exit the process
-
-    lpDisplayBuf = (LPVOID)LocalAlloc(
-        LMEM_ZEROINIT,
-        (lstrlen((LPCTSTR)lpMsgBuf) + lstrlen((LPCTSTR)lpszFunction) + 40) *
-            sizeof(TCHAR));
-    StringCchPrintf(
-        (LPTSTR)lpDisplayBuf, LocalSize(lpDisplayBuf) / sizeof(TCHAR),
-        TEXT("%s failed with error %d: %s"), lpszFunction, dw, lpMsgBuf);
-    MessageBox(NULL, (LPCTSTR)lpDisplayBuf, TEXT("Error"), MB_OK);
-
-    LocalFree(lpMsgBuf);
-    LocalFree(lpDisplayBuf);
-    ExitProcess(dw);
-}
-
 DownloadSorter::DownloadSorter(QString& path) {
     qDebug() << "Creating an instance";
 
@@ -231,9 +201,9 @@ DownloadSorter::DownloadSorter(QString& path) {
 void DownloadSorter::run() {
     this->createFoldersIfDoesntExist();
 
-    // Only list files; do not include directories
-    this->contents =
-        this->downloadFolder.entryInfoList(QDir::Files | QDir::NoDotAndDotDot);
+    // Include directories in the contents list
+    this->contents = this->downloadFolder.entryInfoList(
+        QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot);
 
     const auto plan = this->evaluateCategory();
     if (plan.isEmpty()) {
@@ -244,14 +214,14 @@ void DownloadSorter::run() {
         return;
     }
 
-    emit statusMessage(QStringLiteral("Moving %1 files...").arg(plan.size()));
+    emit statusMessage(QStringLiteral("Moving %1 items...").arg(plan.size()));
     this->moveContents(plan);
 }
 
 void DownloadSorter::recalculateContents() {
-    // Only list files; do not include directories
-    this->contents =
-        this->downloadFolder.entryInfoList(QDir::Files | QDir::NoDotAndDotDot);
+    // Include directories in the contents list
+    this->contents = this->downloadFolder.entryInfoList(
+        QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot);
 }
 
 // int DownloadSorter::moveContents(QMap<QString, QString> filesPerCategory) {
@@ -296,24 +266,30 @@ int DownloadSorter::moveContents(QMap<QString, QString> filesPerCategory) {
 
     for (auto i = filesPerCategory.begin(), end = filesPerCategory.end();
          i != end; ++i) {
-        // QString OriginalLocation = i.key().absoluteFilePath();
-        // QString FileName = i.key();
-        // QString DestinationFolder =
-        // this->downloadFolder.absolutePath() + "/" + i.value();
-        // QString RenamedDestination =
-        // DestinationFolder + "/" + FileName;  // add here the file name
-        // QString OriginalLocation =
-        // this->downloadFolder.absolutePath() + "/" + FileName;
+        const QString src = i.key();
+        const QString dst = i.value();
+        qDebug() << "moving" << src << "to" << dst;
 
-        qDebug() << "moving " << i.key() << " to " << i.value();
+        // Ensure destination directory exists
+        const QFileInfo dstInfo(dst);
+        QDir().mkpath(dstInfo.path());
 
-        std::wstring originalPath = i.key().toStdWString();
-        LPCTSTR original = originalPath.c_str();
-        std::wstring destinationPath = i.value().toStdWString();
-        LPCTSTR destination = destinationPath.c_str();
+        bool ok = QFile::rename(src, dst);
+        if (!ok) {
+            // Fallback for cross-device moves: copy then remove
+            if (QFile::exists(dst)) {
+                qDebug() << "Destination already exists (unexpected):" << dst;
+            }
+            if (QFile::copy(src, dst)) {
+                QFile::remove(src);
+                ok = true;
+            }
+        }
 
-        auto ret = MoveFile(original, destination);
-        qDebug() << ret << " : moving " << original << " to " << destination;
+        if (!ok) {
+            qWarning() << "Failed to move" << src << "to" << dst << ":"
+                       << QFile(src).errorString();
+        }
 
         done++;
         emit progressValueChanged(done);
@@ -337,6 +313,29 @@ QMap<QString, QString> DownloadSorter::evaluateCategory() {
 
         if (blacklist.contains(contentFileName)) {
             continue;  //   qDebug() << contentFileName;
+        }
+
+        // Handle directories: move to "Downloaded Folders"
+        if (content.isDir()) {
+            QString OutputFolder = "/Downloaded Folders";
+            QString OriginalLocation =
+                this->downloadFolder.absolutePath() + "/" + contentFileName;
+            QString DestinationFolder =
+                this->downloadFolder.absolutePath() + OutputFolder;
+            QString RenamedDestination =
+                DestinationFolder + "/" + contentFileName;
+
+            // Handle duplicates for directories
+            int counter = 1;
+            while (QFileInfo(RenamedDestination).exists()) {
+                QString diff =
+                    contentFileName + " (" + QString::number(counter) + ")";
+                RenamedDestination = DestinationFolder + "/" + diff;
+                counter++;
+            }
+
+            filesPerCategory[OriginalLocation] = RenamedDestination;
+            continue;
         }
 
         // QString suffix = content.suffix();
@@ -385,10 +384,8 @@ QMap<QString, QString> DownloadSorter::evaluateCategory() {
 }
 
 QString DownloadSorter::suffixToFolder(QFileInfo content) {
-    // Do not handle directories here
-    if (content.isDir()) {
-        return "*";
-    }
+    // Removed directory check; directories are handled separately in
+    // evaluateCategory
 
     // Normalize suffix to lower for matching
     QString suffix = content.suffix().toLower();
@@ -416,30 +413,31 @@ void DownloadSorter::createFoldersIfDoesntExist() {
 
     // Ensure custom/default rule folders exist at the download root.
     // If they exist under "Download Folders", move them back to root.
-    for (auto it = this->fileTypesMap.begin(); it != this->fileTypesMap.end();
-         ++it) {
-        const QString rootFolder =
-            this->downloadFolder.absolutePath() + "/" + it.key();
-        QDir rootDir(rootFolder);
-        if (rootDir.exists())
-            continue;
+    // for (auto it = this->fileTypesMap.begin(); it !=
+    // this->fileTypesMap.end();
+    //      ++it) {
+    //     const QString rootFolder =
+    //         this->downloadFolder.absolutePath() + "/" + it.key();
+    //     QDir rootDir(rootFolder);
+    //     if (rootDir.exists())
+    //         continue;
 
-        const QString nestedFolder = this->downloadFolder.absolutePath() +
-                                     "/Download Folders/" + it.key();
-        QDir nestedDir(nestedFolder);
-        if (nestedDir.exists()) {
-            try {
-                std::filesystem::rename(nestedDir.absolutePath().toStdString(),
-                                        rootDir.absolutePath().toStdString());
-            } catch (const std::exception&) {
-                if (!rootDir.exists()) {
-                    std::filesystem::create_directory(
-                        rootDir.absolutePath().toStdString());
-                }
-            }
-        } else {
-            std::filesystem::create_directory(
-                rootDir.absolutePath().toStdString());
-        }
-    }
+    //     const QString nestedFolder = this->downloadFolder.absolutePath() +
+    //                                  "/Download Folders/" + it.key();
+    //     QDir nestedDir(nestedFolder);
+    //     if (nestedDir.exists()) {
+    //         try {
+    //             std::filesystem::rename(nestedDir.absolutePath().toStdString(),
+    //                                     rootDir.absolutePath().toStdString());
+    //         } catch (const std::exception&) {
+    //             if (!rootDir.exists()) {
+    //                 std::filesystem::create_directory(
+    //                     rootDir.absolutePath().toStdString());
+    //             }
+    //         }
+    //     } else {
+    //         std::filesystem::create_directory(
+    //             rootDir.absolutePath().toStdString());
+    //     }
+    // }
 }

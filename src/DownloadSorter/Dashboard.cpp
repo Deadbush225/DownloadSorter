@@ -308,9 +308,12 @@ Dashboard::Dashboard() {
     // ++ Retrieving settings
     setDarkTheme();
 
+    this->setWindowIcon(QIcon(":/appicon"));
+
     QString retrieved_path = this->settings->value("Download Path").toString();
     if (retrieved_path.isEmpty()) {
-        this->currentDownloadFolder = QString("Not Set");
+        this->currentDownloadFolder =
+            QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
     } else {
         this->currentDownloadFolder = retrieved_path;
     }
@@ -347,8 +350,8 @@ Dashboard::Dashboard() {
 
     QIcon* search_icon = new QIcon(":/search.png");
     QPushButton* search_btn = new QPushButton(*search_icon, "");
-    QObject::connect(search_btn, QPushButton::clicked, this,
-                     Dashboard::browseDownloadFolder);
+    QObject::connect(search_btn, &QPushButton::clicked, this,
+                     &Dashboard::browseDownloadFolder);
 
     QPushButton* arrangeButton = new QPushButton("Begin Sort");
     QObject::connect(arrangeButton, &QPushButton::clicked, this,
@@ -381,6 +384,11 @@ Dashboard::Dashboard() {
 }
 
 void Dashboard::initiateSort() {
+    if (this->progressBar) {
+        this->progressBar->hide();
+        this->progressBar->setRange(0, 100);
+        this->progressBar->setValue(0);
+    }
     DownloadSorter* ds = new DownloadSorter(this->currentDownloadFolder);
 
     // Wire progress to status bar progress bar
@@ -410,11 +418,6 @@ void Dashboard::initiateSort() {
 }
 
 void Dashboard::downloadFinished() {
-    if (this->progressBar) {
-        this->progressBar->hide();
-        this->progressBar->setRange(0, 100);
-        this->progressBar->setValue(0);
-    }
     this->statusBar()->showMessage(
         QString("Finished: '%1'").arg(this->currentDownloadFolder), 5000);
 }

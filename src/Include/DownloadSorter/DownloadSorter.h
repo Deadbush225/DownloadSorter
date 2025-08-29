@@ -24,8 +24,6 @@
 
 #include <filesystem>
 
-#include <windows.h>
-
 class DownloadSorter : public QThread {
     Q_OBJECT
 
@@ -58,9 +56,7 @@ class DownloadSorter : public QThread {
     QList<QString> blacklist = {"Downloaded Archives",  "Downloaded Audios",
                                 "Downloaded Documents", "Downloaded Fonts",
                                 "Downloaded Images",    "Downloaded Programs",
-                                "Downloaded Videos",    "IDM Roaming",
-                                "Telegram Desktop",     "Tixati",
-                                "Download Folders"};
+                                "Downloaded Videos",    "Downloaded Folders"};
 
     QMap<QString, QList<QString>> fileTypesMap;
     // QMap<QFileInfo, QString> filesPerCategory;
