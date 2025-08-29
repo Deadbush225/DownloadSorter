@@ -327,10 +327,11 @@ Dashboard::Dashboard() {
 
     // Status-bar progress bar (hidden by default)
     this->progressBar = new QProgressBar(this);
-    this->progressBar->setMinimumWidth(120);
+    this->progressBar->setMaximumWidth(120);
+    this->progressBar->setMaximumHeight(15);
     this->progressBar->setTextVisible(false);
     this->statusBar()->addPermanentWidget(this->progressBar);
-    this->progressBar->hide();
+    // this->progressBar->hide();
 
     QVBoxLayout* mainlayout = new ModQVBoxLayout();
 
