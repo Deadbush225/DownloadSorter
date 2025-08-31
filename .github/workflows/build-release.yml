@@ -1,0 +1,107 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Qt6
+        run: |
+          sudo apt update
+          sudo apt install -y qt6-base-dev qt6-tools-dev cmake build-essential
+          sudo apt install -y libgl1-mesa-dev
+
+      - name: Install UPX
+        run: |
+          sudo apt install -y upx-ucl
+
+      - name: Build application
+        run: |
+          cd src
+          cmake -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build
+          cmake --build build --target install_local
+
+      - name: Install packaging tools
+        run: |
+          sudo apt install -y rpm dpkg-dev
+
+      - name: Create packages
+        run: |
+          ./scripts/deploy.sh linux
+
+      - name: Upload Linux artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-packages
+          path: |
+            dist/*.AppImage
+            dist/*.deb
+            dist/*.rpm
+
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Qt6
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: "6.7.2"
+          host: "windows"
+          target: "desktop"
+          arch: "win64_mingw"
+          tools: "tools_mingw,qt.tools.win64_mingw1120"
+
+      - name: Build application
+        run: |
+          cd src
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=${{ env.Qt6_Dir }}
+          cmake --build build --config Release
+          cmake --build build --target install_local --config Release
+
+      - name: Install Inno Setup
+        run: |
+          choco install innosetup
+
+      - name: Create Windows installer
+        run: |
+          pwsh -ExecutionPolicy Bypass -File "./scripts/update_installer.ps1"
+
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer
+          path: "*.exe"
+
+  release:
+    needs: [build-linux, build-windows]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            linux-packages/*
+            windows-installer/*
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

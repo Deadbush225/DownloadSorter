@@ -93,7 +93,59 @@ endif()
 # Harder compression for Qt resources
 set(CMAKE_AUTORCC_OPTIONS --compress 9 --threshold 1)
 
-# MinGW size optimization for Release/MinSizeRel
+# Size optimization for Release/MinSizeRel builds
+if(MINGW OR UNIX)
+    target_compile_options(${PROJECT_NAME} PRIVATE
+        $<$<CONFIG:Release,MinSizeRel>:-Os -ffunction-sections -fdata-sections>
+    )
+    target_link_options(${PROJECT_NAME} PRIVATE
+        $<$<CONFIG:Release,MinSizeRel>:-Wl,--gc-sections -s>
+    )
+endif()
+
+# Add post-build steps for additional size optimization
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    if(UNIX)
+        # Strip all symbols from binaries and libraries after install (Linux)
+        add_custom_command(TARGET install_local POST_BUILD
+            COMMAND find "${INSTALL_DIR}" -name "*.so.*" -o -name "Download Sorter" | xargs strip --strip-unneeded 2>/dev/null || true
+            COMMENT "Stripping debug symbols from binaries and libraries"
+        )
+
+        # Optional: UPX compression (if UPX is available)
+        find_program(UPX_EXECUTABLE upx)
+
+        if(UPX_EXECUTABLE)
+            add_custom_command(TARGET install_local POST_BUILD
+                COMMAND bash -c "cd '${INSTALL_DIR}' && ${UPX_EXECUTABLE} --best 'Download Sorter' 2>/dev/null || true"
+                COMMAND bash -c "cd '${INSTALL_DIR}' && ${UPX_EXECUTABLE} --best libQt6*.so.* 2>/dev/null || true"
+                COMMENT "Compressing binaries with UPX"
+            )
+        endif()
+    elseif(WIN32)
+        # Strip symbols on Windows (if available)
+        find_program(STRIP_EXECUTABLE strip)
+
+        if(STRIP_EXECUTABLE)
+            add_custom_command(TARGET install_local POST_BUILD
+                COMMAND ${STRIP_EXECUTABLE} --strip-unneeded "${INSTALL_DIR}/*.exe" 2>nul || echo "Strip completed"
+                COMMENT "Stripping debug symbols from Windows binaries"
+            )
+        endif()
+
+        # UPX compression for Windows
+        find_program(UPX_EXECUTABLE upx)
+
+        if(UPX_EXECUTABLE)
+            add_custom_command(TARGET install_local POST_BUILD
+                COMMAND ${UPX_EXECUTABLE} --best "${INSTALL_DIR}/*.exe" 2>nul || echo "UPX completed"
+                COMMENT "Compressing Windows binaries with UPX"
+            )
+        endif()
+    endif()
+endif()
+
+# MinGW size optimization for Release/MinSizeRel (legacy - keep for backward compatibility)
 if(MINGW)
     target_compile_options(${PROJECT_NAME} PRIVATE
         $<$<CONFIG:Release,MinSizeRel>:-Os -ffunction-sections -fdata-sections>
