@@ -25,7 +25,7 @@ install(TARGETS Updater DESTINATION .)
 set(INSTALL_DIR "${CMAKE_SOURCE_DIR}/../install")
 
 add_custom_target(install_local
-    COMMAND ${CMAKE_COMMAND} --install "${CMAKE_BINARY_DIR}" --prefix "${INSTALL_DIR}" $<$<BOOL:${CMAKE_CONFIGURATION_TYPES}>:--config> $<$<BOOL:${CMAKE_CONFIGURATION_TYPES}>:$<CONFIG>> $<$<OR:$<CONFIG:Release>,$<CONFIG:MinSizeRel>>:--strip>
+    COMMAND ${CMAKE_COMMAND} --install "${CMAKE_BINARY_DIR}" --prefix "${INSTALL_DIR}" $<$<BOOL:${CMAKE_CONFIGURATION_TYPES}>:--config> $<$<BOOL:${CMAKE_CONFIGURATION_TYPES}>:$<CONFIG>> $<$<OR:$<CMAKE_BUILD_TYPE:Release>,$<CMAKE_BUILD_TYPE:MinSizeRel>>:--strip>
     DEPENDS ${PROJECT_NAME}
     COMMENT "Installing to ${INSTALL_DIR} and deploying Qt runtime dependencies"
 )
