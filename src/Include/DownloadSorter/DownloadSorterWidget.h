@@ -6,6 +6,7 @@
 
 class QPushButton;
 class QProgressBar;
+// Forward-declare global class (no namespace)
 class DownloadSorter;
 
 class DownloadSorterWidget : public QWidget {

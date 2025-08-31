@@ -21,7 +21,6 @@
 class QAction;
 class QMenu;
 
-#include "DownloadSorter.h"
 #include "subclass.h"
 
 // #include <boost/format.hpp>
@@ -54,7 +53,6 @@ class Dashboard : public QMainWindow {
 
    public slots:
     void browseDownloadFolder();
-    // void browseFolder();
 };
 
 #endif

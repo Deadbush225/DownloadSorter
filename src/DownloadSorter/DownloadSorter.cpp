@@ -1,201 +1,12 @@
 #include "../Include/DownloadSorter/DownloadSorter.h"
+#include <QDir>
 #include <QFile>
-#include <QJsonArray>
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QStandardPaths>
+#include <QFileInfo>
 
-// Persist helpers for mappings
-namespace {
-QString mappingsConfigPath() {
-    const QString base =
-        QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
-    QDir dir(base);
-    dir.mkpath("DownloadSorter");
-    return dir.filePath("DownloadSorter/mappings.json");
-}
-
-static QJsonDocument readDoc() {
-    QFile f(mappingsConfigPath());
-    if (!f.exists()) {
-        QJsonObject obj;
-        obj.insert(QStringLiteral("defaults"), QJsonArray());
-        obj.insert(QStringLiteral("custom"), QJsonArray());
-        return QJsonDocument(obj);
-    }
-    if (!f.open(QIODevice::ReadOnly)) {
-        QJsonObject obj;
-        obj.insert(QStringLiteral("defaults"), QJsonArray());
-        obj.insert(QStringLiteral("custom"), QJsonArray());
-        return QJsonDocument(obj);
-    }
-    const auto doc = QJsonDocument::fromJson(f.readAll());
-    f.close();
-    if (!doc.isObject()) {
-        QJsonObject obj;
-        obj.insert(QStringLiteral("defaults"), QJsonArray());
-        obj.insert(QStringLiteral("custom"), QJsonArray());
-        return QJsonDocument(obj);
-    }
-    return doc;
-}
-
-static bool writeDoc(const QJsonDocument& doc) {
-    QFile f(mappingsConfigPath());
-    if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate))
-        return false;
-    const auto bytes = doc.toJson(QJsonDocument::Indented);
-    const bool ok = f.write(bytes) == bytes.size();
-    f.close();
-    return ok;
-}
-
-static QMap<QString, QList<QString>> readSection(const char* key) {
-    QMap<QString, QList<QString>> map;
-    const auto doc = readDoc();
-    const auto obj = doc.object();
-    const auto arr = obj.value(QLatin1String(key)).toArray();
-    for (const auto& v : arr) {
-        const auto o = v.toObject();
-        const QString folder = o.value(QStringLiteral("folder")).toString();
-        QList<QString> exts;
-        for (const auto& ev : o.value(QStringLiteral("extensions")).toArray()) {
-            const QString e = ev.toString().toLower();
-            if (!e.isEmpty() && !exts.contains(e))
-                exts.push_back(e);
-        }
-        if (!folder.isEmpty() && !exts.isEmpty())
-            map.insert(folder, exts);
-    }
-    return map;
-}
-
-static void writeSection(const char* key,
-                         const QMap<QString, QList<QString>>& map) {
-    auto doc = readDoc();
-    auto obj = doc.object();
-    QJsonArray arr;
-    for (auto it = map.constBegin(); it != map.constEnd(); ++it) {
-        QJsonObject o;
-        o.insert(QStringLiteral("folder"), it.key());
-        QJsonArray exts;
-        for (const auto& e : it.value())
-            exts.push_back(e.toLower());
-        o.insert(QStringLiteral("extensions"), exts);
-        arr.push_back(o);
-    }
-    obj.insert(QLatin1String(key), arr);
-    writeDoc(QJsonDocument(obj));
-}
-
-// Defaults used only when settings are empty
-static QMap<QString, QList<QString>> defaultSeed() {
-    QMap<QString, QList<QString>> m;
-    m[QStringLiteral("Downloaded Archives")] = {"zip", "rar", "7z"};
-    m[QStringLiteral("Downloaded Audios")] = {"m4a", "mp3", "wav", "aac"};
-    m[QStringLiteral("Downloaded Documents")] = {
-        "doc", "docx", "xls", "xlsx", "ppt", "pptx", "odt", "pdf", "rtf"};
-    m[QStringLiteral("Downloaded Fonts")] = {"otf", "ttf"};
-    m[QStringLiteral("Downloaded Images")] = {"png",  "jpeg", "jpg", "gif",
-                                              "tiff", "psd",  "ai",  "eps"};
-    m[QStringLiteral("Downloaded Programs")] = {"exe", "msi"};
-    m[QStringLiteral("Downloaded Videos")] = {"mp4", "mov", "wmv", "avi",
-                                              "mkv"};
-    return m;
-}
-
-// Active rules helpers (single array format)
-static QMap<QString, QList<QString>> parseArrayDoc(const QJsonDocument& doc) {
-    QMap<QString, QList<QString>> map;
-    if (!doc.isArray())
-        return map;
-    for (const auto& v : doc.array()) {
-        const auto obj = v.toObject();
-        const QString folder = obj.value(QStringLiteral("folder")).toString();
-        QList<QString> exts;
-        for (const auto& ev :
-             obj.value(QStringLiteral("extensions")).toArray()) {
-            const QString e = ev.toString().toLower();
-            if (!e.isEmpty() && !exts.contains(e))
-                exts.push_back(e);
-        }
-        if (!folder.isEmpty() && !exts.isEmpty())
-            map.insert(folder, exts);
-    }
-    return map;
-}
-
-static bool saveActiveMappings(const QMap<QString, QList<QString>>& map) {
-    QJsonArray arr;
-    for (auto it = map.constBegin(); it != map.constEnd(); ++it) {
-        QJsonObject o;
-        o.insert(QStringLiteral("folder"), it.key());
-        QJsonArray exts;
-        for (const auto& e : it.value())
-            exts.push_back(e.toLower());
-        o.insert(QStringLiteral("extensions"), exts);
-        arr.push_back(o);
-    }
-    QFile f(mappingsConfigPath());
-    if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate))
-        return false;
-    const auto bytes = QJsonDocument(arr).toJson(QJsonDocument::Indented);
-    const bool ok = f.write(bytes) == bytes.size();
-    f.close();
-    return ok;
-}
-
-static QMap<QString, QList<QString>> loadActiveMappings() {
-    QFile f(mappingsConfigPath());
-    if (!f.exists()) {
-        auto seed = defaultSeed();
-        saveActiveMappings(seed);
-        return seed;
-    }
-    if (!f.open(QIODevice::ReadOnly)) {
-        auto seed = defaultSeed();
-        saveActiveMappings(seed);
-        return seed;
-    }
-    const auto doc = QJsonDocument::fromJson(f.readAll());
-    f.close();
-
-    if (doc.isArray()) {
-        const auto map = parseArrayDoc(doc);
-        if (!map.isEmpty())
-            return map;
-        auto seed = defaultSeed();
-        saveActiveMappings(seed);
-        return seed;
-    }
-
-    if (doc.isObject()) {
-        // Legacy: choose custom if present, otherwise defaults; convert to
-        // active
-        const auto custom = readSection("custom");
-        const auto defs = readSection("defaults");
-        const auto chosen = custom.isEmpty() ? defs : custom;
-        if (!chosen.isEmpty()) {
-            saveActiveMappings(chosen);
-            return chosen;
-        }
-    }
-
-    auto seed = defaultSeed();
-    saveActiveMappings(seed);
-    return seed;
-}
-}  // namespace
-
-DownloadSorter::DownloadSorter(QString& path) {
-    qDebug() << "Creating an instance";
-
+// Keep constructor minimal; settings (mappings/ignore) are injected by
+// Dashboard
+DownloadSorter::DownloadSorter(const QString& path) {
     this->downloadFolder = QDir(path);
-
-    // Load active rules; seed defaults only if settings are empty
-    this->fileTypesMap = loadActiveMappings();
-
-    qDebug() << "Instance created";
 }
 
 void DownloadSorter::run() {
@@ -208,7 +19,6 @@ void DownloadSorter::run() {
     const auto plan = this->evaluateCategory();
     if (plan.isEmpty()) {
         emit statusMessage(QStringLiteral("Nothing to move."));
-        // Nudge the progress bar to finished instantly
         emit progressRangeChanged(0, 1);
         emit progressValueChanged(1);
         return;
@@ -219,44 +29,9 @@ void DownloadSorter::run() {
 }
 
 void DownloadSorter::recalculateContents() {
-    // Include directories in the contents list
     this->contents = this->downloadFolder.entryInfoList(
         QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot);
 }
-
-// int DownloadSorter::moveContents(QMap<QString, QString> filesPerCategory) {
-//     for (auto i = filesPerCategory.begin(), end = filesPerCategory.end();
-//          i != end; ++i) {
-
-//         qDebug() << "moving " << i.key() << " to " << i.value();
-
-//         std::wstring originalPath = i.key().toStdWString();
-//         std::wstring destinationPath = i.value().toStdWString();
-//         LPCTSTR original = originalPath.c_str();
-//         LPCTSTR destination = destinationPath.c_str();
-
-//         qDebug() << "Original path: " <<
-//         QString::fromStdWString(originalPath); qDebug() << "Destination path:
-//         " << QString::fromStdWString(destinationPath);
-
-//         // if (_waccess(originalPath.c_str(), 0) != 0) {
-//         //     qDebug() << "File does not exist: " <<
-//         QString::fromStdWString(originalPath);
-//         //     continue;
-//         // }
-
-//         if (!MoveFile(original, destination)) {
-//             DWORD error = GetLastError();
-//             qDebug() << "MoveFile failed with error code: " << error;
-//             // Handle specific errors if needed
-//         } else {
-//             qDebug() << "Successfully moved " << original << " to " <<
-//             destination;
-//         }
-//     }
-
-//     return 0;
-// }
 
 int DownloadSorter::moveContents(QMap<QString, QString> filesPerCategory) {
     const int total = filesPerCategory.size();
@@ -268,7 +43,6 @@ int DownloadSorter::moveContents(QMap<QString, QString> filesPerCategory) {
          i != end; ++i) {
         const QString src = i.key();
         const QString dst = i.value();
-        qDebug() << "moving" << src << "to" << dst;
 
         // Ensure destination directory exists
         const QFileInfo dstInfo(dst);
@@ -277,9 +51,6 @@ int DownloadSorter::moveContents(QMap<QString, QString> filesPerCategory) {
         bool ok = QFile::rename(src, dst);
         if (!ok) {
             // Fallback for cross-device moves: copy then remove
-            if (QFile::exists(dst)) {
-                qDebug() << "Destination already exists (unexpected):" << dst;
-            }
             if (QFile::copy(src, dst)) {
                 QFile::remove(src);
                 ok = true;
@@ -300,99 +71,85 @@ int DownloadSorter::moveContents(QMap<QString, QString> filesPerCategory) {
 }
 
 QMap<QString, QString> DownloadSorter::evaluateCategory() {
-    // QList<QFileInfo> filteredContents;
-    // qDebug() << "[qdebug] - evaluateCategory";
     QMap<QString, QString> filesPerCategory;
 
-    for (auto i = this->contents.begin(); i != this->contents.end(); i++) {
-        // QFileInfo content = this->contents.at(i);
-        QFileInfo content = *i;
-        QString baseName = content.completeBaseName();
-        QString suffixName = content.suffix();
-        QString contentFileName = content.fileName();
+    for (auto it = this->contents.begin(); it != this->contents.end(); ++it) {
+        const QFileInfo content = *it;
+        const QString baseName = content.completeBaseName();
+        const QString suffixName = content.suffix();
+        const QString contentFileName = content.fileName();
 
         if (blacklist.contains(contentFileName)) {
-            continue;  //   qDebug() << contentFileName;
+            continue;
         }
 
-        // Handle directories: move to "Downloaded Folders"
-        if (content.isDir()) {
-            QString OutputFolder = "/Downloaded Folders";
-            QString OriginalLocation =
-                this->downloadFolder.absolutePath() + "/" + contentFileName;
-            QString DestinationFolder =
-                this->downloadFolder.absolutePath() + OutputFolder;
-            QString RenamedDestination =
-                DestinationFolder + "/" + contentFileName;
+        // Ignore via regex (both files and directories)
+        bool shouldIgnore = false;
+        for (const QRegularExpression& regex : this->ignorePatterns) {
+            if (regex.isValid() && regex.match(contentFileName).hasMatch()) {
+                shouldIgnore = true;
+                break;
+            }
+        }
+        if (shouldIgnore)
+            continue;
 
-            // Handle duplicates for directories
+        // Directories: move to "Downloaded Folders"
+        if (content.isDir()) {
+            const QString outputFolder = "/Downloaded Folders";
+            const QString originalLocation =
+                this->downloadFolder.absolutePath() + "/" + contentFileName;
+            const QString destinationFolder =
+                this->downloadFolder.absolutePath() + outputFolder;
+            QString renamedDestination =
+                destinationFolder + "/" + contentFileName;
+
             int counter = 1;
-            while (QFileInfo(RenamedDestination).exists()) {
-                QString diff =
+            while (QFileInfo(renamedDestination).exists()) {
+                const QString diff =
                     contentFileName + " (" + QString::number(counter) + ")";
-                RenamedDestination = DestinationFolder + "/" + diff;
+                renamedDestination = destinationFolder + "/" + diff;
                 counter++;
             }
 
-            filesPerCategory[OriginalLocation] = RenamedDestination;
+            filesPerCategory[originalLocation] = renamedDestination;
             continue;
         }
 
-        // QString suffix = content.suffix();
-
-        QString OutputFolder = this->suffixToFolder(content);
-        if (OutputFolder == "*") {  // unrecognized file, don't move
+        // Files
+        const QString outputFolder = this->suffixToFolder(content);
+        if (outputFolder == "*")  // unrecognized file, skip
             continue;
-        }
-        // .isEmpty()
-        //    ? "/" + this->suffixToFolder(suffix)
-        //    : "";
 
-        // QString OriginalFolder = content.fileName();
-
-        // qDebug() << contentFileName << " : " << OutputFolder;
-        // qDebug() << this->contents.at(i).absoluteFilePath();
-
-        // construction
-        // QString FileName = i.key();
-        QString OriginalLocation =
+        const QString originalLocation =
             this->downloadFolder.absolutePath() + "/" + contentFileName;
+        const QString destinationFolder =
+            this->downloadFolder.absolutePath() + outputFolder;
+        QString renamedDestination = destinationFolder + "/" + contentFileName;
 
-        QString DestinationFolder =
-            this->downloadFolder.absolutePath() + OutputFolder;
-        QString RenamedDestination = DestinationFolder + "/" +
-                                     contentFileName;  // add here the file name
-
-        // checking
+        // Handle duplicates
         int counter = 1;
-        qDebug() << RenamedDestination << " : "
-                 << QFileInfo(RenamedDestination).exists();
-
-        while (QFileInfo(RenamedDestination).exists()) {
-            qDebug() << "[Duplicate Found] Renaming ... " << RenamedDestination;
-
-            std::string diff = baseName.toStdString() + std::string(" (") +
-                               std::to_string(counter) + std::string(").") +
-                               suffixName.toStdString();
-            RenamedDestination = DestinationFolder + '/' + diff.c_str();
+        while (QFileInfo(renamedDestination).exists()) {
+            const std::string diff = baseName.toStdString() + " (" +
+                                     std::to_string(counter) + ")." +
+                                     suffixName.toStdString();
+            renamedDestination =
+                destinationFolder + '/' + QString::fromStdString(diff);
             counter++;
         }
 
-        filesPerCategory[OriginalLocation] = RenamedDestination;
+        filesPerCategory[originalLocation] = renamedDestination;
     }
+
     return filesPerCategory;
 }
 
 QString DownloadSorter::suffixToFolder(QFileInfo content) {
-    // Removed directory check; directories are handled separately in
-    // evaluateCategory
-
-    // Normalize suffix to lower for matching
-    QString suffix = content.suffix().toLower();
-    for (auto i = this->fileTypesMap.begin(), end = this->fileTypesMap.end();
-         i != end; ++i) {
-        if (i.value().contains(suffix)) {
-            return "/" + i.key();
+    const QString suffix = content.suffix().toLower();
+    for (auto it = this->fileTypesMap.begin(), end = this->fileTypesMap.end();
+         it != end; ++it) {
+        if (it.value().contains(suffix)) {
+            return "/" + it.key();
         }
     }
     return "*";
@@ -401,43 +158,12 @@ QString DownloadSorter::suffixToFolder(QFileInfo content) {
 void DownloadSorter::createFoldersIfDoesntExist() {
     // Create built-in folders from blacklist (if missing)
     for (qsizetype i = 0; i < this->blacklist.length(); i++) {
-        QString folder =
+        const QString folder =
             this->downloadFolder.absolutePath() + "/" + this->blacklist[i];
-        QDir folder_dir = QDir(folder);
-
+        QDir folder_dir(folder);
         if (!folder_dir.exists()) {
             std::filesystem::create_directory(
                 folder_dir.absolutePath().toStdString());
         }
     }
-
-    // Ensure custom/default rule folders exist at the download root.
-    // If they exist under "Download Folders", move them back to root.
-    // for (auto it = this->fileTypesMap.begin(); it !=
-    // this->fileTypesMap.end();
-    //      ++it) {
-    //     const QString rootFolder =
-    //         this->downloadFolder.absolutePath() + "/" + it.key();
-    //     QDir rootDir(rootFolder);
-    //     if (rootDir.exists())
-    //         continue;
-
-    //     const QString nestedFolder = this->downloadFolder.absolutePath() +
-    //                                  "/Download Folders/" + it.key();
-    //     QDir nestedDir(nestedFolder);
-    //     if (nestedDir.exists()) {
-    //         try {
-    //             std::filesystem::rename(nestedDir.absolutePath().toStdString(),
-    //                                     rootDir.absolutePath().toStdString());
-    //         } catch (const std::exception&) {
-    //             if (!rootDir.exists()) {
-    //                 std::filesystem::create_directory(
-    //                     rootDir.absolutePath().toStdString());
-    //             }
-    //         }
-    //     } else {
-    //         std::filesystem::create_directory(
-    //             rootDir.absolutePath().toStdString());
-    //     }
-    // }
 }

@@ -1,4 +1,8 @@
 #include "../Include/DownloadSorter/Dashboard.h"
+#include "../Include/DownloadSorter/DownloadSorter.h"
+#include "../Include/DownloadSorter/SettingsDialog.h"
+#include "../Include/DownloadSorter/SettingsManager.h"
+
 #include <QAction>
 #include <QFile>
 #include <QJsonArray>
@@ -7,7 +11,6 @@
 #include <QMenu>
 #include <QMenuBar>
 #include <QStandardPaths>
-#include "../Include/DownloadSorter/SettingsDialog.h"
 
 #include <QApplication>
 #include <QPalette>
@@ -120,190 +123,6 @@ QLineEdit {
 )");
 }
 
-// Persist helpers for mappings (legacy helpers kept but not used directly)
-namespace {
-QString mappingsConfigPath() {
-    const QString base =
-        QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
-    QDir dir(base);
-    dir.mkpath("DownloadSorter");
-    return dir.filePath("DownloadSorter/mappings.json");
-}
-
-QJsonDocument readDoc() {
-    QFile f(mappingsConfigPath());
-    if (!f.exists()) {
-        QJsonObject obj;
-        obj.insert(QStringLiteral("defaults"), QJsonArray());
-        obj.insert(QStringLiteral("custom"), QJsonArray());
-        return QJsonDocument(obj);
-    }
-    if (!f.open(QIODevice::ReadOnly)) {
-        QJsonObject obj;
-        obj.insert(QStringLiteral("defaults"), QJsonArray());
-        obj.insert(QStringLiteral("custom"), QJsonArray());
-        return QJsonDocument(obj);
-    }
-    const auto doc = QJsonDocument::fromJson(f.readAll());
-    f.close();
-    if (!doc.isObject()) {
-        QJsonObject obj;
-        obj.insert(QStringLiteral("defaults"), QJsonArray());
-        obj.insert(QStringLiteral("custom"), QJsonArray());
-        return QJsonDocument(obj);
-    }
-    return doc;
-}
-
-bool writeDoc(const QJsonDocument& doc) {
-    QFile f(mappingsConfigPath());
-    if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate))
-        return false;
-    const auto bytes = doc.toJson(QJsonDocument::Indented);
-    const bool ok = f.write(bytes) == bytes.size();
-    f.close();
-    return ok;
-}
-
-QMap<QString, QList<QString>> readSection(const char* key) {
-    QMap<QString, QList<QString>> map;
-    const auto doc = readDoc();
-    const auto obj = doc.object();
-    const auto arr = obj.value(QLatin1String(key)).toArray();
-    for (const auto& v : arr) {
-        const auto o = v.toObject();
-        const QString folder = o.value(QStringLiteral("folder")).toString();
-        QList<QString> exts;
-        for (const auto& ev : o.value(QStringLiteral("extensions")).toArray()) {
-            const auto s = ev.toString().toLower();
-            if (!s.isEmpty() && !exts.contains(s))
-                exts.push_back(s);
-        }
-        if (!folder.isEmpty() && !exts.isEmpty())
-            map.insert(folder, exts);
-    }
-    return map;
-}
-
-bool writeSection(const char* key, const QMap<QString, QList<QString>>& map) {
-    auto doc = readDoc();
-    auto obj = doc.object();
-    QJsonArray arr;
-    for (auto it = map.constBegin(); it != map.constEnd(); ++it) {
-        QJsonObject o;
-        o.insert(QStringLiteral("folder"), it.key());
-        QJsonArray exts;
-        for (const auto& e : it.value())
-            exts.push_back(e.toLower());
-        o.insert(QStringLiteral("extensions"), exts);
-        arr.push_back(o);
-    }
-    obj.insert(QLatin1String(key), arr);
-    return writeDoc(QJsonDocument(obj));
-}
-
-// Defaults to seed if settings are empty (used once)
-static QMap<QString, QList<QString>> defaultSeed() {
-    QMap<QString, QList<QString>> m;
-    m[QStringLiteral("Downloaded Archives")] = {"zip", "rar", "7z"};
-    m[QStringLiteral("Downloaded Audios")] = {"m4a", "mp3", "wav", "aac"};
-    m[QStringLiteral("Downloaded Documents")] = {
-        "doc", "docx", "xls", "xlsx", "ppt", "pptx", "odt", "pdf", "rtf"};
-    m[QStringLiteral("Downloaded Fonts")] = {"otf", "ttf"};
-    m[QStringLiteral("Downloaded Images")] = {"png",  "jpeg", "jpg", "gif",
-                                              "tiff", "psd",  "ai",  "eps"};
-    m[QStringLiteral("Downloaded Programs")] = {"exe", "msi"};
-    m[QStringLiteral("Downloaded Videos")] = {"mp4", "mov", "wmv", "avi",
-                                              "mkv"};
-    return m;
-}
-
-// Active rules: single array format (the one we edit and use)
-static QMap<QString, QList<QString>> parseArrayDoc(const QJsonDocument& doc) {
-    QMap<QString, QList<QString>> map;
-    if (!doc.isArray())
-        return map;
-    const auto arr = doc.array();
-    for (const auto& v : arr) {
-        const auto obj = v.toObject();
-        const QString folder = obj.value(QStringLiteral("folder")).toString();
-        QList<QString> exts;
-        for (const auto& ev :
-             obj.value(QStringLiteral("extensions")).toArray()) {
-            const auto s = ev.toString().toLower();
-            if (!s.isEmpty() && !exts.contains(s))
-                exts.push_back(s);
-        }
-        if (!folder.isEmpty() && !exts.isEmpty())
-            map.insert(folder, exts);
-    }
-    return map;
-}
-
-static bool saveActiveMappings(const QMap<QString, QList<QString>>& map) {
-    QJsonArray arr;
-    for (auto it = map.constBegin(); it != map.constEnd(); ++it) {
-        QJsonObject obj;
-        obj.insert(QStringLiteral("folder"), it.key());
-        QJsonArray exts;
-        for (const auto& e : it.value())
-            exts.push_back(e.toLower());
-        obj.insert(QStringLiteral("extensions"), exts);
-        arr.push_back(obj);
-    }
-    QFile f(mappingsConfigPath());
-    if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate))
-        return false;
-    const auto bytes = QJsonDocument(arr).toJson(QJsonDocument::Indented);
-    const bool ok = f.write(bytes) == bytes.size();
-    f.close();
-    return ok;
-}
-
-static QMap<QString, QList<QString>> loadActiveMappings() {
-    QFile f(mappingsConfigPath());
-    if (!f.exists()) {
-        auto seed = defaultSeed();
-        saveActiveMappings(seed);
-        return seed;
-    }
-    if (!f.open(QIODevice::ReadOnly)) {
-        auto seed = defaultSeed();
-        saveActiveMappings(seed);
-        return seed;
-    }
-    const auto doc = QJsonDocument::fromJson(f.readAll());
-    f.close();
-
-    // If already array -> use it
-    if (doc.isArray()) {
-        const auto map = parseArrayDoc(doc);
-        if (!map.isEmpty())
-            return map;
-        // Empty array -> seed
-        auto seed = defaultSeed();
-        saveActiveMappings(seed);
-        return seed;
-    }
-
-    // Legacy object (defaults/custom) -> convert once to active array
-    if (doc.isObject()) {
-        const auto custom = readSection("custom");
-        const auto defs = readSection("defaults");
-        const auto chosen = custom.isEmpty() ? defs : custom;
-        if (!chosen.isEmpty()) {
-            saveActiveMappings(chosen);
-            return chosen;
-        }
-    }
-
-    // Fallback: seed
-    auto seed = defaultSeed();
-    saveActiveMappings(seed);
-    return seed;
-}
-}  // namespace
-
 Dashboard::Dashboard() {
     // ++ Retrieving settings
     setDarkTheme();
@@ -390,9 +209,16 @@ void Dashboard::initiateSort() {
         this->progressBar->setRange(0, 100);
         this->progressBar->setValue(0);
     }
-    DownloadSorter* ds = new DownloadSorter(this->currentDownloadFolder);
 
-    // Wire progress to status bar progress bar
+    auto* ds = new DownloadSorter(this->currentDownloadFolder);
+
+    // Get settings from SettingsManager
+    const SettingsData settings = SettingsManager::read();
+    ds->setFileTypesMap(settings.mappings);
+    ds->setIgnorePatterns(settings.ignorePatterns);
+
+    // Wire progress to status bar progress bar (use qualified
+    // pointer-to-member)
     QObject::connect(ds, &DownloadSorter::progressRangeChanged, this,
                      [this](int min, int max) {
                          if (this->progressBar) {
@@ -409,7 +235,6 @@ void Dashboard::initiateSort() {
     QObject::connect(
         ds, &DownloadSorter::statusMessage, this,
         [this](const QString& m) { this->statusBar()->showMessage(m); });
-
     QObject::connect(ds, &DownloadSorter::finished, this,
                      &Dashboard::downloadFinished);
     QObject::connect(ds, &QThread::finished, ds, &QObject::deleteLater);
@@ -455,14 +280,10 @@ void Dashboard::onSortStarted() {
 
 // Open settings dialog for rules from the menu action
 void Dashboard::openRulesConfigurator() {
-    bool ok = false;
-    auto current = loadActiveMappings();
-    auto updated = SettingsDialog::getMappings(this, current, &ok);
-    if (ok) {
-        if (saveActiveMappings(updated)) {
-            this->statusBar()->showMessage("Rules saved.", 3000);
-        } else {
-            this->statusBar()->showMessage("Failed to save rules.", 3000);
-        }
+    // One-call helper: loads, shows, and persists on accept
+    if (SettingsDialog::editSettings(this)) {
+        this->statusBar()->showMessage("Settings saved.", 3000);
+    } else {
+        this->statusBar()->showMessage("Settings unchanged.", 3000);
     }
 }

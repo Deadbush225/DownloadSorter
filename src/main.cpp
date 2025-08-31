@@ -21,16 +21,7 @@ int main(int argc, char* argv[]) {
     // QCoreApplication::setApplicationName("Download Sorter");
 
     Dashboard dashboard;
-    // Dashboard* dashboard = new Dashboard();
     dashboard.show();
 
-    // dashboard->setStyleSheet("*{border:1px solid black;}");
-
     return app->exec();
-
-    // std::cout << "Press any key to exit";
-    // std::string line;
-    // std::cin >> line;
-    // delete app;
-    // delete ds;
 }
