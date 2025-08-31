@@ -1,12 +1,12 @@
 cmake_minimum_required(VERSION 3.16)
 project(DownloadSorter VERSION 0.1.0)
 
-if(WIN32)
-    # add_definitions(-DPLATFORM_WINDOWS)
-    set(CMAKE_PREFIX_PATH "C:/Dev/Qt/6.7.3/mingw_64")
-    set(CMAKE_C_COMPILER "C:/Dev/Qt/Tools/mingw1120_64/bin/gcc.exe")
-    set(CMAKE_CXX_COMPILER "C:/Dev/Qt/Tools/mingw1120_64/bin/g++.exe")
-endif()
+# Removed hardcoded Windows compiler and Qt paths to support CI environments
+# if(WIN32)
+# set(CMAKE_PREFIX_PATH "C:/Dev/Qt/6.7.3/mingw_64")
+# set(CMAKE_C_COMPILER "C:/Dev/Qt/Tools/mingw1120_64/bin/gcc.exe")
+# set(CMAKE_CXX_COMPILER "C:/Dev/Qt/Tools/mingw1120_64/bin/g++.exe")
+# endif()
 
 # Find includes in the build directories
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
@@ -103,48 +103,6 @@ if(MINGW OR UNIX)
     )
 endif()
 
-# Add post-build steps for additional size optimization
-if(CMAKE_BUILD_TYPE STREQUAL "Release")
-    if(UNIX)
-        # Strip all symbols from binaries and libraries after install (Linux)
-        add_custom_command(TARGET install_local POST_BUILD
-            COMMAND find "${INSTALL_DIR}" -name "*.so.*" -o -name "Download Sorter" | xargs strip --strip-unneeded 2>/dev/null || true
-            COMMENT "Stripping debug symbols from binaries and libraries"
-        )
-
-        # Optional: UPX compression (if UPX is available)
-        find_program(UPX_EXECUTABLE upx)
-
-        if(UPX_EXECUTABLE)
-            add_custom_command(TARGET install_local POST_BUILD
-                COMMAND bash -c "cd '${INSTALL_DIR}' && ${UPX_EXECUTABLE} --best 'Download Sorter' 2>/dev/null || true"
-                COMMAND bash -c "cd '${INSTALL_DIR}' && ${UPX_EXECUTABLE} --best libQt6*.so.* 2>/dev/null || true"
-                COMMENT "Compressing binaries with UPX"
-            )
-        endif()
-    elseif(WIN32)
-        # Strip symbols on Windows (if available)
-        find_program(STRIP_EXECUTABLE strip)
-
-        if(STRIP_EXECUTABLE)
-            add_custom_command(TARGET install_local POST_BUILD
-                COMMAND ${STRIP_EXECUTABLE} --strip-unneeded "${INSTALL_DIR}/*.exe" 2>nul || echo "Strip completed"
-                COMMENT "Stripping debug symbols from Windows binaries"
-            )
-        endif()
-
-        # UPX compression for Windows
-        find_program(UPX_EXECUTABLE upx)
-
-        if(UPX_EXECUTABLE)
-            add_custom_command(TARGET install_local POST_BUILD
-                COMMAND ${UPX_EXECUTABLE} --best "${INSTALL_DIR}/*.exe" 2>nul || echo "UPX completed"
-                COMMENT "Compressing Windows binaries with UPX"
-            )
-        endif()
-    endif()
-endif()
-
 # MinGW size optimization for Release/MinSizeRel (legacy - keep for backward compatibility)
 if(MINGW)
     target_compile_options(${PROJECT_NAME} PRIVATE
@@ -189,3 +147,45 @@ add_custom_target(install_local
     DEPENDS ${PROJECT_NAME}
     COMMENT "Installing to ${INSTALL_DIR} and deploying Qt runtime dependencies"
 )
+
+# Post-install size optimization (attach after install_local target exists)
+# Always add commands; they are fast and safe. Optionally guarded by config using generator expressions if needed.
+if(UNIX)
+    find_program(STRIP_EXECUTABLE strip)
+
+    if(STRIP_EXECUTABLE)
+        add_custom_command(TARGET install_local POST_BUILD
+            COMMAND find "${INSTALL_DIR}" -type f \( -name "Download Sorter" -o -name "*.so*" \) -print -exec ${STRIP_EXECUTABLE} --strip-unneeded {} \;
+            COMMENT "Stripping debug symbols from binaries and libraries"
+            VERBATIM
+        )
+    endif()
+
+    find_program(UPX_EXECUTABLE upx)
+
+    if(UPX_EXECUTABLE)
+        add_custom_command(TARGET install_local POST_BUILD
+            COMMAND bash -c "cd '${INSTALL_DIR}' && ${UPX_EXECUTABLE} --best 'Download Sorter' 2>/dev/null || true"
+            COMMAND bash -c "cd '${INSTALL_DIR}' && ${UPX_EXECUTABLE} --best libQt6*.so.* 2>/dev/null || true"
+            COMMENT "Compressing binaries with UPX"
+        )
+    endif()
+elseif(WIN32)
+    find_program(STRIP_EXECUTABLE strip)
+
+    if(STRIP_EXECUTABLE)
+        add_custom_command(TARGET install_local POST_BUILD
+            COMMAND ${STRIP_EXECUTABLE} --strip-unneeded "${INSTALL_DIR}/*.exe" 2>nul || echo "Strip completed"
+            COMMENT "Stripping debug symbols from Windows binaries"
+        )
+    endif()
+
+    find_program(UPX_EXECUTABLE upx)
+
+    if(UPX_EXECUTABLE)
+        add_custom_command(TARGET install_local POST_BUILD
+            COMMAND ${UPX_EXECUTABLE} --best "${INSTALL_DIR}/*.exe" 2>nul || echo "UPX completed"
+            COMMENT "Compressing Windows binaries with UPX"
+        )
+    endif()
+endif()

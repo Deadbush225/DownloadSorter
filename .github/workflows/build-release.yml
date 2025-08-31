@@ -17,7 +17,7 @@ jobs:
         run: |
           sudo apt update
           sudo apt install -y qt6-base-dev qt6-tools-dev cmake build-essential
-          sudo apt install -y libgl1-mesa-dev
+          sudo apt install -y libgl1-mesa-dev libxkbcommon-dev libxkbcommon-x11-dev libx11-xcb-dev libxcb1-dev libxcb-util-dev libxcb-xkb-dev
 
       - name: Install UPX
         run: |
@@ -59,12 +59,12 @@ jobs:
           version: "6.7.2"
           host: "windows"
           target: "desktop"
-          arch: "win64_mingw"
+          arch: "win64_msvc2022_64"
 
       - name: Build application
         run: |
           cd src
-          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=${{ env.Qt6_Dir }}
+          cmake -B build -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="${{ env.Qt6_Dir }}"
           cmake --build build --config Release
           cmake --build build --target install_local --config Release
 
