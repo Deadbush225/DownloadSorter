@@ -18,7 +18,7 @@ jobs:
 
       - name: Read version
         id: ver
-        run: echo "version=$(cat VERSION)" >> $GITHUB_OUTPUT
+        run: echo "version=$(jq -r .version manifest.json)" >> $GITHUB_OUTPUT
 
       - name: Install Qt6
         run: |
@@ -61,41 +61,25 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Read version
-        id: ver
-        shell: bash
-        run: echo "version=$(cat VERSION)" >> $GITHUB_OUTPUT
-
-      - name: Install Qt6 (MinGW)
+      - name: Install Qt6 (MSVC)
         uses: jurplel/install-qt-action@v3
         with:
           version: "6.7.3"
           host: "windows"
           target: "desktop"
-          arch: "win64_mingw"
-          tools: "tools_mingw1310"
+          arch: "win64_msvc2019_64"
 
-      - name: Add Qt MinGW to PATH
-        shell: pwsh
-        run: |
-          $qtDir = "${{ env.Qt6_DIR }}"
-          $toolsRoot = Resolve-Path (Join-Path (Split-Path (Split-Path $qtDir)) Tools)
-          $mingwDirs = Get-ChildItem -Path $toolsRoot -Directory -Filter "mingw*_64" | Sort-Object Name -Descending
-          $preferred = $mingwDirs | Where-Object { $_.Name -match 'mingw(1310|1120|1100|100|90)_64' } | Select-Object -First 1
-          if (-not $preferred) { $preferred = $mingwDirs | Select-Object -First 1 }
-          if ($preferred) {
-            Write-Host "Using MinGW: $($preferred.FullName)"
-            "$($preferred.FullName)\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-          } else {
-            Write-Host "No Qt MinGW tools found under $toolsRoot"
-          }
+      - name: Set up MSVC environment
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
 
-      - name: Build application (GCC/MinGW)
+      - name: Build application (MSVC)
         run: |
           cd src
-          cmake -B build -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="${{ env.Qt6_DIR }}"
-          cmake --build build -j 4
-          cmake --build build --target install_local -j 2
+          cmake -B build -G "Visual Studio 17 2022" -A x64 -DCMAKE_PREFIX_PATH="${{ env.Qt6_DIR }}"
+          cmake --build build --config Release -j 4
+          cmake --build build --target install_local --config Release -j 2
 
       - name: Install Inno Setup
         run: |
@@ -122,7 +106,7 @@ jobs:
 
       - name: Read version
         id: ver
-        run: echo "version=$(cat VERSION)" >> $GITHUB_OUTPUT
+        run: echo "version=$(jq -r .version manifest.json)" >> $GITHUB_OUTPUT
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4

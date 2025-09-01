@@ -8,8 +8,8 @@ PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD_DIR="$PROJECT_ROOT/build"
 INSTALL_DIR="$PROJECT_ROOT/install"
 SCRIPTS_DIR="$PROJECT_ROOT/scripts"
-# Read version from VERSION file (single source of truth)
-VERSION=$(tr -d '\r' < "$PROJECT_ROOT/VERSION")
+# Read version from manifest.json
+VERSION=$(grep -o '"version"[^"]*"[0-9.]*"' "$PROJECT_ROOT/manifest.json" | sed 's/.*"\([0-9.]*\)"/\1/')
 
 echo "=== Download Sorter Deployment Script ==="
 echo "Version: $VERSION"

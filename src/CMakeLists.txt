@@ -1,7 +1,8 @@
-cmake_minimum_required(VERSION 3.16)
-# Read version string from repository VERSION file
-file(READ "${CMAKE_SOURCE_DIR}/../VERSION" _VER_STR)
-string(STRIP "${_VER_STR}" PROJECT_VER)
+cmake_minimum_required(VERSION 3.19)
+
+# Read version string from repository manifest.json
+file(READ "${CMAKE_SOURCE_DIR}/../manifest.json" _MANIFEST_STR)
+string(JSON PROJECT_VER GET "${_MANIFEST_STR}" version)
 project(DownloadSorter VERSION ${PROJECT_VER})
 
 # Removed hardcoded Windows compiler and Qt paths to support CI environments
@@ -53,6 +54,7 @@ if(WIN32)
 endif()
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES} ${app_icon_resource_windows} "./icons/icons.qrc")
+
 # Include the Updater subproject
 add_subdirectory(${CMAKE_SOURCE_DIR}/../Updater ${CMAKE_BINARY_DIR}/Updater)
 
@@ -127,7 +129,7 @@ if(UNIX AND NOT APPLE)
 endif()
 
 # Create the runtime deploy script only on platforms where Qt provides deploy tools (Windows MSVC/macOS). On Linux and Windows MinGW, skip.
-if(APPLE OR (WIN32 AND MSVC))
+if(APPLE OR(WIN32 AND MSVC))
     set(deploy_script "${CMAKE_CURRENT_BINARY_DIR}/deploy_${PROJECT_NAME}.cmake")
     configure_file(
         "${CMAKE_CURRENT_SOURCE_DIR}/cmake/DeployRuntime.cmake.in"
@@ -143,10 +145,15 @@ set(executable_path "${executable_path}")
 
 # Install the app (goes to ${INSTALL_DIR}) and deploy Qt runtime deps
 install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION .)
-# Ensure Updater is built and installed with the main project
-add_dependencies(${PROJECT_NAME} Updater)
 
-if(APPLE OR (WIN32 AND MSVC))
+if(APPLE OR(WIN32 AND MSVC))
+    install(SCRIPT ${deploy_script})
+endif()
+
+# Also install manifest.json so Updater and app can read it at runtime
+install(FILES "${CMAKE_SOURCE_DIR}/../manifest.json" DESTINATION .)
+
+if(APPLE OR(WIN32 AND MSVC))
     install(SCRIPT ${deploy_script})
 endif()
 
