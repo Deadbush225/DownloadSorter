@@ -99,17 +99,31 @@ jobs:
           $totalSize = (Get-ChildItem -Recurse "./install" | Measure-Object -Property Length -Sum).Sum
           Write-Host "Total size: $([math]::Round($totalSize / 1MB, 2))MB"
 
-      - name: Manual DLL cleanup
+      - name: Analyze deployment size
         shell: pwsh
         run: |
-          Write-Host "=== Manual DLL cleanup ==="
+          Write-Host "=== Install directory contents ==="
+          Get-ChildItem -Recurse "./install" | ForEach-Object {
+            if (-not $_.PSIsContainer) {
+              $size = [math]::Round($_.Length / 1MB, 2)
+              $relativePath = $_.FullName.Replace((Resolve-Path "./install").Path, "").TrimStart('\')
+              Write-Host "$relativePath : ${size}MB"
+            }
+          }
+          $totalSize = (Get-ChildItem -Recurse "./install" | Measure-Object -Property Length -Sum).Sum
+          Write-Host "Total size: $([math]::Round($totalSize / 1MB, 2))MB"
+
+      - name: Additional DLL cleanup
+        shell: pwsh
+        run: |
+          Write-Host "=== Additional DLL cleanup after Qt deploy ==="
           $unwantedDlls = @(
             "Qt6Concurrent.dll", "Qt6PrintSupport.dll", "Qt6Multimedia.dll", 
             "Qt6MultimediaWidgets.dll", "Qt6Quick.dll", "Qt6Qml.dll",
             "Qt6QmlModels.dll", "Qt6QmlWorkerScript.dll", "Qt6QuickControls2.dll",
             "Qt6Test.dll", "Qt6Sql.dll", "Qt6Xml.dll", "Qt6SerialPort.dll",
             "Qt6WebEngine*.dll", "Qt6Positioning.dll", "Qt6Sensors.dll",
-            "opengl32sw.dll", "Qt6OpenGL.dll", "Qt6OpenGLWidgets.dll",
+            "Qt6Svg.dll", "Qt6SvgWidgets.dll", "Qt6Charts.dll", "Qt6DataVisualization.dll",
             "concrt140.dll", "msvcp140.dll", "msvcp140_1.dll", "msvcp140_2.dll",
             "vcruntime140.dll", "vcruntime140_1.dll", "api-ms-*.dll",
             "icu*.dll", "Qt6DBus.dll", "*d.dll"
@@ -127,8 +141,8 @@ jobs:
             }
           }
 
-          # Remove entire unused plugin folders
-          $unwantedFolders = @("sqldrivers", "multimedia", "qmltooling", "quick", "scenegraph", "styles")
+          # Remove entire unused plugin folders that might have been deployed
+          $unwantedFolders = @("sqldrivers", "multimedia", "qmltooling", "quick", "scenegraph", "designer", "gamepads")
           foreach ($folder in $unwantedFolders) {
             $path = "./install/$folder"
             if (Test-Path $path) {
@@ -140,7 +154,13 @@ jobs:
             }
           }
 
-          Write-Host "Total space saved: $([math]::Round($totalRemoved / 1MB, 2))MB"
+          Write-Host "Total space saved by additional cleanup: $([math]::Round($totalRemoved / 1MB, 2))MB"
+
+      - name: Create Windows installer
+        run: |
+          pwsh -ExecutionPolicy Bypass -File "./scripts/update_installer.ps1"
+
+      - name: Final size analysis
 
       - name: Create Windows installer
         run: |
