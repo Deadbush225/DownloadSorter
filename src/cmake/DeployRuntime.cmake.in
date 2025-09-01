@@ -9,10 +9,33 @@ set(QT_DEPLOY_EXCLUDE_PLUGINS "tls;*;networkinformation;*;bearer;*;imageformats;
 set(QT_DEPLOY_EXCLUDE_LIBRARIES "@QT_DEPLOY_EXCLUDE_LIBS_LIST@")
 set(QT_DEPLOY_PLUGINS "@QT_DEPLOY_PLUGINS_LIST@")
 
-# Invoke Qt deploy support
-include("${QT_DEPLOY_SUPPORT}")
+# Invoke Qt deploy support (absolute file path)
+include("@QT_DEPLOY_SUPPORT_FILE@")
+
+# Compute installed executable paths
+if(WIN32)
+    set(_MAIN_EXE    "${CMAKE_INSTALL_PREFIX}/@MAIN_BASENAME@.exe")
+    set(_UPDATER_EXE "${CMAKE_INSTALL_PREFIX}/@UPDATER_BASENAME@.exe")
+elseif(APPLE)
+    set(_MAIN_EXE    "${CMAKE_INSTALL_PREFIX}/@MAIN_BASENAME@.app")
+    set(_UPDATER_EXE "${CMAKE_INSTALL_PREFIX}/@UPDATER_BASENAME@.app")
+else()
+    set(_MAIN_EXE    "${CMAKE_INSTALL_PREFIX}/@MAIN_BASENAME@")
+    set(_UPDATER_EXE "${CMAKE_INSTALL_PREFIX}/@UPDATER_BASENAME@")
+endif()
+
+# Deploy main app
 qt_deploy_runtime_dependencies(
-    EXECUTABLE "@executable_path@"
+    EXECUTABLE "${_MAIN_EXE}"
     PLUGINS_DIR .
     NO_TRANSLATIONS
 )
+
+# Deploy Updater if present
+if(EXISTS "${_UPDATER_EXE}")
+    qt_deploy_runtime_dependencies(
+        EXECUTABLE "${_UPDATER_EXE}"
+        PLUGINS_DIR .
+        NO_TRANSLATIONS
+    )
+endif()

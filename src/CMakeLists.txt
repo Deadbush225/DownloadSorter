@@ -130,7 +130,35 @@ endif()
 
 # Create the runtime deploy script only on platforms where Qt provides deploy tools (Windows MSVC/macOS). On Linux and Windows MinGW, skip.
 if(APPLE OR(WIN32 AND MSVC))
+    # Locate QtDeploySupport cmake module from the found Qt6 package
+    # Qt 6 exports a variable Qt6_DIR that contains the CMake package dir
+    if(NOT DEFINED Qt6_DIR)
+        message(FATAL_ERROR "Qt6_DIR is not defined; ensure CMAKE_PREFIX_PATH points to the Qt installation")
+    endif()
+
+    # Try typical relative path to Qt6DeploySupport.cmake
+    set(_QT_DEPLOY_SUPPORT_CANDIDATES
+        "${Qt6_DIR}/Qt6DeploySupport.cmake"
+        "${Qt6_DIR}/../../lib/cmake/Qt6/Qt6DeploySupport.cmake"
+        "${Qt6_DIR}/../lib/cmake/Qt6/Qt6DeploySupport.cmake"
+        "${Qt6_DIR}/lib/cmake/Qt6/Qt6DeploySupport.cmake"
+    )
+    set(QT_DEPLOY_SUPPORT_FILE "")
+
+    foreach(p IN LISTS _QT_DEPLOY_SUPPORT_CANDIDATES)
+        if(EXISTS "${p}")
+            set(QT_DEPLOY_SUPPORT_FILE "${p}")
+            break()
+        endif()
+    endforeach()
+
+    if(NOT QT_DEPLOY_SUPPORT_FILE)
+        message(WARNING "Qt6DeploySupport.cmake not found; skipping Qt CMake deploy. Installer will rely on windeployqt fallback.")
+    endif()
+
     set(deploy_script "${CMAKE_CURRENT_BINARY_DIR}/deploy_${PROJECT_NAME}.cmake")
+    set(MAIN_BASENAME "Download Sorter")
+    set(UPDATER_BASENAME "Updater")
     configure_file(
         "${CMAKE_CURRENT_SOURCE_DIR}/cmake/DeployRuntime.cmake.in"
         "${deploy_script}"
@@ -147,7 +175,10 @@ set(executable_path "${executable_path}")
 install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION .)
 
 if(APPLE OR(WIN32 AND MSVC))
-    install(SCRIPT ${deploy_script})
+    if(QT_DEPLOY_SUPPORT_FILE)
+        # Pass CMAKE_INSTALL_PREFIX at install time
+        install(SCRIPT ${deploy_script})
+    endif()
 endif()
 
 # Also install manifest.json so Updater and app can read it at runtime
