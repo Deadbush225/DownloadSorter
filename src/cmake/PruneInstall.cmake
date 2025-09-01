@@ -54,15 +54,44 @@ _rm_glob(
     "${CMAKE_INSTALL_PREFIX}/libcrypto*.dll"
 )
 
-# Remove D3DCompiler (ANGLE) if copied
+# Remove D3DCompiler (ANGLE) and DirectX components if copied
 _rm_glob(
     "${CMAKE_INSTALL_PREFIX}/d3dcompiler*.dll"
     "${CMAKE_INSTALL_PREFIX}/D3DCompiler*.dll"
+    "${CMAKE_INSTALL_PREFIX}/dxcompiler*.dll"
+    "${CMAKE_INSTALL_PREFIX}/dxil*.dll"
 )
 
-# Remove MinGW runtime DLLs (not applicable on MSVC, but safe if present)
-_rm_glob(
-    "${CMAKE_INSTALL_PREFIX}/libgcc_s_seh-1.dll"
-    "${CMAKE_INSTALL_PREFIX}/libstdc++-6.dll"
-    "${CMAKE_INSTALL_PREFIX}/libwinpthread-1.dll"
+# Remove Visual C++ redistributable (should be installed separately)
+_rm_glob("${CMAKE_INSTALL_PREFIX}/vc_redist*.exe")
+
+# Additional cleanup to ensure unwanted DLLs are removed
+_rm_glob("${CMAKE_INSTALL_PREFIX}/opengl32sw.dll")
+_rm_glob("${CMAKE_INSTALL_PREFIX}/Qt6Network.dll")
+
+# Remove unwanted plugin directories
+file(REMOVE_RECURSE
+    "${CMAKE_INSTALL_PREFIX}/tls"
+    "${CMAKE_INSTALL_PREFIX}/networkinformation"
+    "${CMAKE_INSTALL_PREFIX}/bearer"
+    "${CMAKE_INSTALL_PREFIX}/generic"
+    "${CMAKE_INSTALL_PREFIX}/translations"
 )
+
+# Final aggressive cleanup for persistent DLLs
+message(STATUS "Performing final cleanup of unwanted DLLs...")
+
+foreach(_unwanted_dll IN ITEMS
+    "opengl32sw.dll"
+    "d3dcompiler_47.dll"
+    "dxcompiler.dll"
+    "dxil.dll"
+    "Qt6Network.dll"
+    "vc_redist.x64.exe")
+    set(_full_path "${CMAKE_INSTALL_PREFIX}/${_unwanted_dll}")
+
+    if(EXISTS "${_full_path}")
+        file(REMOVE "${_full_path}")
+        message(STATUS "Removed: ${_unwanted_dll}")
+    endif()
+endforeach()

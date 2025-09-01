@@ -4,8 +4,8 @@ set(QT_DEPLOY_LIB_DIR ".")
 set(QT_DEPLOY_PLUGINS_DIR ".")  # optional when passing PLUGINS_DIR
 
 # Exclusions and plugin selection
-set(QT_DEPLOY_EXCLUDE_MODULES "Network;NetworkInformation;NetworkAuth")
-set(QT_DEPLOY_EXCLUDE_PLUGINS "tls;*;networkinformation;*;bearer;*;imageformats;qgif;qjpeg;qsvg;qsvgicon;generic;qtuiotouchplugin;")
+set(QT_DEPLOY_EXCLUDE_MODULES "Network;NetworkInformation;NetworkAuth;OpenGL;OpenGLWidgets")
+set(QT_DEPLOY_EXCLUDE_PLUGINS "tls;*;networkinformation;*;bearer;*;imageformats;qgif;qjpeg;qsvg;generic;qtuiotouchplugin;")
 set(QT_DEPLOY_EXCLUDE_LIBRARIES "@QT_DEPLOY_EXCLUDE_LIBS_LIST@")
 set(QT_DEPLOY_PLUGINS "@QT_DEPLOY_PLUGINS_LIST@")
 
@@ -30,6 +30,7 @@ qt_deploy_runtime_dependencies(
     PLUGINS "${QT_DEPLOY_PLUGINS}"
     EXCLUDE_PLUGINS "${QT_DEPLOY_EXCLUDE_PLUGINS}"
     EXCLUDE_MODULES "${QT_DEPLOY_EXCLUDE_MODULES}"
+    EXCLUDE_LIBRARIES "${QT_DEPLOY_EXCLUDE_LIBRARIES}"
     PLUGINS_DIR .
     NO_TRANSLATIONS
 )
@@ -41,6 +42,7 @@ if(EXISTS "${_UPDATER_EXE}")
         PLUGINS "${QT_DEPLOY_PLUGINS}"
         EXCLUDE_PLUGINS "${QT_DEPLOY_EXCLUDE_PLUGINS}"
         EXCLUDE_MODULES "${QT_DEPLOY_EXCLUDE_MODULES}"
+        EXCLUDE_LIBRARIES "${QT_DEPLOY_EXCLUDE_LIBRARIES}"
         PLUGINS_DIR .
         NO_TRANSLATIONS
     )

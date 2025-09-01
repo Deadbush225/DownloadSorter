@@ -1,7 +1,6 @@
 #include <QtCore/QString>
 #include <QtGui/QIcon>
 #include <QtWidgets/QApplication>
-#include <iostream>
 
 #include "./Include/DownloadSorter/Dashboard.h"
 #include "./Include/DownloadSorter/DownloadSorter.h"

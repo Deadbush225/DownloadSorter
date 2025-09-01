@@ -61,8 +61,8 @@ add_subdirectory(${CMAKE_SOURCE_DIR}/../Updater ${CMAKE_BINARY_DIR}/Updater)
 # include_directories("src/Utils" "Utils/")
 set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "Download Sorter")
 
-# Set GUI subsystem only for Windows release builds
-if(WIN32 AND CMAKE_BUILD_TYPE STREQUAL "Release")
+# Set GUI subsystem for all Windows builds to eliminate console window
+if(WIN32)
     set_property(TARGET ${PROJECT_NAME} PROPERTY WIN32_EXECUTABLE true)
 endif()
 
@@ -81,8 +81,8 @@ set(CMAKE_INSTALL_PREFIX "${INSTALL_DIR}" CACHE PATH "Install prefix" FORCE)
 
 # Choose platform plugins to deploy per OS
 if(WIN32)
-    set(QT_DEPLOY_PLUGINS_LIST "platforms;qwindows")
-    set(QT_DEPLOY_EXCLUDE_LIBS_LIST "Qt6Network;D3DCompiler_47")
+    set(QT_DEPLOY_PLUGINS_LIST "platforms;qwindows;iconengines;qsvgicon;imageformats;qico")
+    set(QT_DEPLOY_EXCLUDE_LIBS_LIST "Qt6Network;D3DCompiler_47;dxcompiler;dxil;opengl32sw")
 else()
     set(QT_DEPLOY_PLUGINS_LIST "platforms;qxcb")
     set(QT_DEPLOY_EXCLUDE_LIBS_LIST "Qt6Network")
