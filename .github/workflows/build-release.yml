@@ -96,7 +96,8 @@ jobs:
           Get-ChildItem -Recurse "./install" | ForEach-Object {
             if (-not $_.PSIsContainer) {
               $size = [math]::Round($_.Length / 1MB, 2)
-              Write-Host "$($_.Name): ${size}MB"
+              $relativePath = $_.FullName.Replace((Resolve-Path "./install").Path, "").TrimStart('\')
+              Write-Host "$relativePath : ${size}MB"
             }
           }
           $totalSize = (Get-ChildItem -Recurse "./install" | Measure-Object -Property Length -Sum).Sum
@@ -114,25 +115,36 @@ jobs:
             "Qt6WebEngine*.dll", "Qt6Positioning.dll", "Qt6Sensors.dll",
             "opengl32sw.dll", "Qt6OpenGL.dll", "Qt6OpenGLWidgets.dll",
             "concrt140.dll", "msvcp140.dll", "msvcp140_1.dll", "msvcp140_2.dll",
-            "vcruntime140.dll", "vcruntime140_1.dll", "api-ms-*.dll"
+            "vcruntime140.dll", "vcruntime140_1.dll", "api-ms-*.dll",
+            "icu*.dll", "Qt6DBus.dll", "*d.dll"
           )
+
+          $totalRemoved = 0
           foreach ($dll in $unwantedDlls) {
             $matches = Get-ChildItem -Path "./install" -Filter $dll -Recurse -ErrorAction SilentlyContinue
             foreach ($match in $matches) {
+              $sizeMB = [math]::Round($match.Length / 1MB, 2)
+              $relativePath = $match.FullName.Replace((Resolve-Path "./install").Path, "").TrimStart('\')
               Remove-Item $match.FullName -Force
-              Write-Host "Removed: $($match.Name) ($([math]::Round($match.Length / 1KB, 1))KB)"
+              Write-Host "Removed: $relativePath (${sizeMB}MB)"
+              $totalRemoved += $match.Length
             }
           }
 
           # Remove entire unused plugin folders
-          $unwantedFolders = @("sqldrivers", "multimedia", "qmltooling", "quick", "scenegraph")
+          $unwantedFolders = @("sqldrivers", "multimedia", "qmltooling", "quick", "scenegraph", "styles")
           foreach ($folder in $unwantedFolders) {
             $path = "./install/$folder"
             if (Test-Path $path) {
+              $folderSize = (Get-ChildItem $path -Recurse | Measure-Object -Property Length -Sum).Sum
+              $folderSizeMB = [math]::Round($folderSize / 1MB, 2)
               Remove-Item $path -Recurse -Force
-              Write-Host "Removed folder: $folder"
+              Write-Host "Removed folder: $folder (${folderSizeMB}MB)"
+              $totalRemoved += $folderSize
             }
           }
+
+          Write-Host "Total space saved: $([math]::Round($totalRemoved / 1MB, 2))MB"
 
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
