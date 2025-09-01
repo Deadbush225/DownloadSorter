@@ -121,8 +121,8 @@ if(UNIX AND NOT APPLE)
     )
 endif()
 
-# Create the runtime deploy script only on platforms where Qt provides deploy tools (Windows/macOS). On Linux, skip.
-if(WIN32 OR APPLE)
+# Create the runtime deploy script only on platforms where Qt provides deploy tools (Windows MSVC/macOS). On Linux and Windows MinGW, skip.
+if(APPLE OR (WIN32 AND MSVC))
     set(deploy_script "${CMAKE_CURRENT_BINARY_DIR}/deploy_${PROJECT_NAME}.cmake")
     configure_file(
         "${CMAKE_CURRENT_SOURCE_DIR}/cmake/DeployRuntime.cmake.in"
@@ -138,7 +138,7 @@ set(executable_path "${executable_path}")
 
 # Install the app (goes to ${INSTALL_DIR}) and deploy Qt runtime deps
 install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION .)
-if(WIN32 OR APPLE)
+if(APPLE OR (WIN32 AND MSVC))
     install(SCRIPT ${deploy_script})
 endif()
 
