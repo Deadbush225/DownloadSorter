@@ -121,30 +121,22 @@ if(UNIX AND NOT APPLE)
     )
 endif()
 
-# Create the runtime deploy script, that gathers all the dependencies. Equivalent of "windeployqt", but with filters
-# Only used on platforms where Qt provides deploy tools (Windows/macOS). On Linux, skip this step.
+# Create the runtime deploy script only on platforms where Qt provides deploy tools (Windows/macOS). On Linux, skip.
 if(WIN32 OR APPLE)
     set(deploy_script "${CMAKE_CURRENT_BINARY_DIR}/deploy_${PROJECT_NAME}.cmake")
-    file(GENERATE OUTPUT "${deploy_script}" CONTENT "
-set(QT_DEPLOY_BIN_DIR ".")
-set(QT_DEPLOY_LIB_DIR ".")
-set(QT_DEPLOY_PLUGINS_DIR ".")  # optional when passing PLUGINS_DIR
-
-# This file is generated at generate-time and executed at install time
-set(QT_DEPLOY_EXCLUDE_MODULES \"Network;NetworkInformation;NetworkAuth\")
-set(QT_DEPLOY_EXCLUDE_PLUGINS \"tls;*;networkinformation;*;bearer;*;imageformats;qgif;qjpeg;qsvg;qsvgicon;generic;qtuiotouchplugin;\")
-set(QT_DEPLOY_EXCLUDE_LIBRARIES \"${QT_DEPLOY_EXCLUDE_LIBS_LIST}\")
-set(QT_DEPLOY_PLUGINS \"${QT_DEPLOY_PLUGINS_LIST}\")
-include(\"${QT_DEPLOY_SUPPORT}\")
-qt_deploy_runtime_dependencies(
-    EXECUTABLE \"${executable_path}\"
-    PLUGINS_DIR .
-    NO_TRANSLATIONS
-)
-")
+    configure_file(
+        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/DeployRuntime.cmake.in"
+        "${deploy_script}"
+        @ONLY
+    )
 endif()
 
-# Install the app (goes to ${INSTALL_DIR}/bin) and deploy Qt runtime deps
+# Variables for deploy template substitution
+set(QT_DEPLOY_EXCLUDE_LIBS_LIST "${QT_DEPLOY_EXCLUDE_LIBS_LIST}")
+set(QT_DEPLOY_PLUGINS_LIST "${QT_DEPLOY_PLUGINS_LIST}")
+set(executable_path "${executable_path}")
+
+# Install the app (goes to ${INSTALL_DIR}) and deploy Qt runtime deps
 install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION .)
 if(WIN32 OR APPLE)
     install(SCRIPT ${deploy_script})
