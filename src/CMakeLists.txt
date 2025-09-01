@@ -153,10 +153,6 @@ endif()
 # Also install manifest.json so Updater and app can read it at runtime
 install(FILES "${CMAKE_SOURCE_DIR}/../manifest.json" DESTINATION .)
 
-if(APPLE OR(WIN32 AND MSVC))
-    install(SCRIPT ${deploy_script})
-endif()
-
 # Prune optional/banned bits that may remain or from previous installs using a script file
 install(SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/cmake/PruneInstall.cmake")
 
@@ -168,10 +164,17 @@ if(NOT MSVC)
     set(INSTALL_STRIP_FLAG "$<$<OR:$<CONFIG:Release>,$<CONFIG:MinSizeRel>>:--strip>")
 endif()
 
+# Build-time config argument for multi-config generators (Visual Studio, Xcode)
+set(INSTALL_CONFIG_ARGS "")
+
+if(CMAKE_CONFIGURATION_TYPES)
+    set(INSTALL_CONFIG_ARGS --config $<CONFIG>)
+endif()
+
 add_custom_target(install_local
     COMMAND ${CMAKE_COMMAND} -E remove_directory "${INSTALL_DIR}"
     COMMAND ${CMAKE_COMMAND} -E make_directory "${INSTALL_DIR}"
-    COMMAND ${CMAKE_COMMAND} --install "${CMAKE_BINARY_DIR}" --prefix "${INSTALL_DIR}" $<$<BOOL:${CMAKE_CONFIGURATION_TYPES}>:--config> $<$<BOOL:${CMAKE_CONFIGURATION_TYPES}>:$<CONFIG>> ${INSTALL_STRIP_FLAG}
+    COMMAND ${CMAKE_COMMAND} --install "${CMAKE_BINARY_DIR}" --prefix "${INSTALL_DIR}" ${INSTALL_CONFIG_ARGS} ${INSTALL_STRIP_FLAG}
     DEPENDS ${PROJECT_NAME}
     COMMENT "Installing to ${INSTALL_DIR} and deploying Qt runtime dependencies"
 )
