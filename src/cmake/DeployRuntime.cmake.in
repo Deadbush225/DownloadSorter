@@ -27,6 +27,9 @@ endif()
 # Deploy main app
 qt_deploy_runtime_dependencies(
     EXECUTABLE "${_MAIN_EXE}"
+    PLUGINS "${QT_DEPLOY_PLUGINS}"
+    EXCLUDE_PLUGINS "${QT_DEPLOY_EXCLUDE_PLUGINS}"
+    EXCLUDE_MODULES "${QT_DEPLOY_EXCLUDE_MODULES}"
     PLUGINS_DIR .
     NO_TRANSLATIONS
 )
@@ -35,6 +38,9 @@ qt_deploy_runtime_dependencies(
 if(EXISTS "${_UPDATER_EXE}")
     qt_deploy_runtime_dependencies(
         EXECUTABLE "${_UPDATER_EXE}"
+        PLUGINS "${QT_DEPLOY_PLUGINS}"
+        EXCLUDE_PLUGINS "${QT_DEPLOY_EXCLUDE_PLUGINS}"
+        EXCLUDE_MODULES "${QT_DEPLOY_EXCLUDE_MODULES}"
         PLUGINS_DIR .
         NO_TRANSLATIONS
     )
