@@ -161,10 +161,17 @@ endif()
 install(SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/cmake/PruneInstall.cmake")
 
 # Convenience target: copy to install and run deploy (strip in Release/MinSizeRel)
+# Only use --strip on non-MSVC toolchains
+set(INSTALL_STRIP_FLAG "")
+
+if(NOT MSVC)
+    set(INSTALL_STRIP_FLAG "$<$<OR:$<CONFIG:Release>,$<CONFIG:MinSizeRel>>:--strip>")
+endif()
+
 add_custom_target(install_local
     COMMAND ${CMAKE_COMMAND} -E remove_directory "${INSTALL_DIR}"
     COMMAND ${CMAKE_COMMAND} -E make_directory "${INSTALL_DIR}"
-    COMMAND ${CMAKE_COMMAND} --install "${CMAKE_BINARY_DIR}" --prefix "${INSTALL_DIR}" $<$<BOOL:${CMAKE_CONFIGURATION_TYPES}>:--config> $<$<BOOL:${CMAKE_CONFIGURATION_TYPES}>:$<CONFIG>> $<$<OR:$<CONFIG:Release>,$<CONFIG:MinSizeRel>>:--strip>
+    COMMAND ${CMAKE_COMMAND} --install "${CMAKE_BINARY_DIR}" --prefix "${INSTALL_DIR}" $<$<BOOL:${CMAKE_CONFIGURATION_TYPES}>:--config> $<$<BOOL:${CMAKE_CONFIGURATION_TYPES}>:$<CONFIG>> ${INSTALL_STRIP_FLAG}
     DEPENDS ${PROJECT_NAME}
     COMMENT "Installing to ${INSTALL_DIR} and deploying Qt runtime dependencies"
 )
@@ -192,13 +199,13 @@ if(UNIX)
             VERBATIM
         )
     endif()
-elseif(WIN32)
+elseif(MINGW)
     find_program(STRIP_EXECUTABLE strip)
 
     if(STRIP_EXECUTABLE)
         add_custom_command(TARGET install_local POST_BUILD
             COMMAND ${STRIP_EXECUTABLE} --strip-unneeded "${INSTALL_DIR}/*.exe" 2>nul || echo "Strip completed"
-            COMMENT "Stripping debug symbols from Windows binaries"
+            COMMENT "Stripping debug symbols from Windows binaries (MinGW)"
         )
     endif()
 
@@ -207,7 +214,7 @@ elseif(WIN32)
     if(UPX_EXECUTABLE)
         add_custom_command(TARGET install_local POST_BUILD
             COMMAND ${UPX_EXECUTABLE} --best "${INSTALL_DIR}/*.exe" 2>nul || echo "UPX completed"
-            COMMENT "Compressing Windows binaries with UPX"
+            COMMENT "Compressing Windows binaries with UPX (MinGW)"
         )
     endif()
 endif()
