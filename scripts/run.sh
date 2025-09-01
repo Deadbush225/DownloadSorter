@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 
 git add -A
-git commit -m "attempt to decrease windows installer size"
-git tag -f v1.5.2
+git commit -m "enhanced DLL pruning and added deployment analysis"
+git tag -f v0.0.8
 git push origin main --tags -f

@@ -5,11 +5,14 @@ function(_rm_glob)
     file(GLOB _tmp ${ARGV})
 
     if(_tmp)
-        file(REMOVE ${_tmp})
+        foreach(_file IN LISTS _tmp)
+            message(STATUS "Removing: ${_file}")
+            file(REMOVE "${_file}")
+        endforeach()
     endif()
 endfunction()
 
-# Remove software OpenGL
+# Remove software OpenGL and graphics acceleration DLLs
 _rm_glob("${CMAKE_INSTALL_PREFIX}/opengl32sw.dll")
 _rm_glob("${CMAKE_INSTALL_PREFIX}/Qt6OpenGL*.dll")
 _rm_glob("${CMAKE_INSTALL_PREFIX}/Qt6OpenGLWidgets*.dll")
@@ -18,8 +21,20 @@ _rm_glob("${CMAKE_INSTALL_PREFIX}/Qt6ANGLE*.dll")
 # Remove debug builds
 _rm_glob("${CMAKE_INSTALL_PREFIX}/*d.dll")
 
-# Remove QtNetwork (if not required at runtime)
+# Remove unused Qt modules
 _rm_glob("${CMAKE_INSTALL_PREFIX}/Qt6Network.dll")
+_rm_glob("${CMAKE_INSTALL_PREFIX}/Qt6Concurrent.dll")
+_rm_glob("${CMAKE_INSTALL_PREFIX}/Qt6PrintSupport.dll")
+_rm_glob("${CMAKE_INSTALL_PREFIX}/Qt6Multimedia*.dll")
+_rm_glob("${CMAKE_INSTALL_PREFIX}/Qt6Quick*.dll")
+_rm_glob("${CMAKE_INSTALL_PREFIX}/Qt6Qml*.dll")
+_rm_glob("${CMAKE_INSTALL_PREFIX}/Qt6Test.dll")
+_rm_glob("${CMAKE_INSTALL_PREFIX}/Qt6Sql.dll")
+_rm_glob("${CMAKE_INSTALL_PREFIX}/Qt6Xml.dll")
+_rm_glob("${CMAKE_INSTALL_PREFIX}/Qt6SerialPort.dll")
+_rm_glob("${CMAKE_INSTALL_PREFIX}/Qt6WebEngine*.dll")
+_rm_glob("${CMAKE_INSTALL_PREFIX}/Qt6Positioning.dll")
+_rm_glob("${CMAKE_INSTALL_PREFIX}/Qt6Sensors.dll")
 
 # Remove ICU and DBus if present (not needed for basic widgets apps on MSVC)
 _rm_glob("${CMAKE_INSTALL_PREFIX}/icudt*.dll")
@@ -27,26 +42,38 @@ _rm_glob("${CMAKE_INSTALL_PREFIX}/icuin*.dll")
 _rm_glob("${CMAKE_INSTALL_PREFIX}/icuuc*.dll")
 _rm_glob("${CMAKE_INSTALL_PREFIX}/Qt6DBus*.dll")
 
+# Remove MSVC runtime DLLs (should be installed system-wide)
+_rm_glob("${CMAKE_INSTALL_PREFIX}/concrt140.dll")
+_rm_glob("${CMAKE_INSTALL_PREFIX}/msvcp140*.dll")
+_rm_glob("${CMAKE_INSTALL_PREFIX}/vcruntime140*.dll")
+_rm_glob("${CMAKE_INSTALL_PREFIX}/api-ms-*.dll")
+
 # Remove plugin folders we don't want
 file(REMOVE_RECURSE
     "${CMAKE_INSTALL_PREFIX}/tls"
     "${CMAKE_INSTALL_PREFIX}/networkinformation"
     "${CMAKE_INSTALL_PREFIX}/bearer"
+    "${CMAKE_INSTALL_PREFIX}/sqldrivers"
+    "${CMAKE_INSTALL_PREFIX}/multimedia"
+    "${CMAKE_INSTALL_PREFIX}/qmltooling"
+    "${CMAKE_INSTALL_PREFIX}/quick"
+    "${CMAKE_INSTALL_PREFIX}/scenegraph"
+    "${CMAKE_INSTALL_PREFIX}/translations"
+    "${CMAKE_INSTALL_PREFIX}/generic"
 )
 
-# Remove image format plugins we don’t use (keep png)
+# Remove image format plugins we don't use (keep png)
 file(GLOB _img_unneeded
     "${CMAKE_INSTALL_PREFIX}/imageformats/qgif*.dll"
     "${CMAKE_INSTALL_PREFIX}/imageformats/qjpeg*.dll"
     "${CMAKE_INSTALL_PREFIX}/imageformats/qsvg*.dll"
 )
-
 if(_img_unneeded)
-    file(REMOVE ${_img_unneeded})
+    foreach(_file IN LISTS _img_unneeded)
+        message(STATUS "Removing image plugin: ${_file}")
+        file(REMOVE "${_file}")
+    endforeach()
 endif()
-
-# Remove TUIO touch plugin
-_rm_glob("${CMAKE_INSTALL_PREFIX}/generic/qtuiotouchplugin*.dll")
 
 # Remove OpenSSL if it slipped in
 _rm_glob(
@@ -62,36 +89,11 @@ _rm_glob(
     "${CMAKE_INSTALL_PREFIX}/dxil*.dll"
 )
 
-# Remove Visual C++ redistributable (should be installed separately)
-_rm_glob("${CMAKE_INSTALL_PREFIX}/vc_redist*.exe")
-
-# Additional cleanup to ensure unwanted DLLs are removed
-_rm_glob("${CMAKE_INSTALL_PREFIX}/opengl32sw.dll")
-_rm_glob("${CMAKE_INSTALL_PREFIX}/Qt6Network.dll")
-
-# Remove unwanted plugin directories
-file(REMOVE_RECURSE
-    "${CMAKE_INSTALL_PREFIX}/tls"
-    "${CMAKE_INSTALL_PREFIX}/networkinformation"
-    "${CMAKE_INSTALL_PREFIX}/bearer"
-    "${CMAKE_INSTALL_PREFIX}/generic"
-    "${CMAKE_INSTALL_PREFIX}/translations"
+# Remove MinGW runtime DLLs (not applicable on MSVC, but safe if present)
+_rm_glob(
+    "${CMAKE_INSTALL_PREFIX}/libgcc_s_seh-1.dll"
+    "${CMAKE_INSTALL_PREFIX}/libstdc++-6.dll"
+    "${CMAKE_INSTALL_PREFIX}/libwinpthread-1.dll"
 )
 
-# Final aggressive cleanup for persistent DLLs
-message(STATUS "Performing final cleanup of unwanted DLLs...")
-
-foreach(_unwanted_dll IN ITEMS
-    "opengl32sw.dll"
-    "d3dcompiler_47.dll"
-    "dxcompiler.dll"
-    "dxil.dll"
-    "Qt6Network.dll"
-    "vc_redist.x64.exe")
-    set(_full_path "${CMAKE_INSTALL_PREFIX}/${_unwanted_dll}")
-
-    if(EXISTS "${_full_path}")
-        file(REMOVE "${_full_path}")
-        message(STATUS "Removed: ${_unwanted_dll}")
-    endif()
-endforeach()
+message(STATUS "PruneInstall.cmake completed")
