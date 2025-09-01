@@ -6,6 +6,9 @@ on:
       - "v*"
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build-linux:
     runs-on: ubuntu-latest
@@ -97,7 +100,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: windows-installer
-          path: "*.exe"
+          path: windows-installer/*.exe
+          if-no-files-found: error
 
   release:
     needs: [build-linux, build-windows]
@@ -119,5 +123,4 @@ jobs:
           draft: false
           prerelease: false
           generate_release_notes: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}

@@ -38,7 +38,7 @@ ArchitecturesInstallIn64BitMode=x64compatible
 DisableProgramGroupPage=yes
 ; Remove the following line to run in administrative install mode (install for all users).
 PrivilegesRequired=lowest
-OutputDir=D:\System\Coding\Projects\download-sorter
+OutputDir=windows-installer
 OutputBaseFilename=Download-Sorter
 SolidCompression=yes
 Compression=lzma2/ultra64
@@ -53,7 +53,8 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "D:\System\Coding\Projects\download-sorter\install\bin\*"; DestDir: "DownloadSorterSetup-x64"; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: "*.pdb;*.lib;*.exp;*.map;*.ilk;*.debug;opengl32sw.dll;libgcc_s_seh-1.dll;libstdc++-6.dll;libwinpthread-1.dll"
+; Package everything from the local install/ folder into the application directory
+Source: "install\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: "*.pdb;*.lib;*.exp;*.map;*.ilk;*.debug"
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
