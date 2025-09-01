@@ -41,7 +41,7 @@ DisableProgramGroupPage=yes
 ; Remove the following line to run in administrative install mode (install for all users).
 PrivilegesRequired=lowest
 OutputDir=windows-installer
-OutputBaseFilename=Download-Sorter-{#MyAppVersion}
+OutputBaseFilename=download-sorter-{#MyAppVersion}
 SolidCompression=yes
 Compression=lzma2/ultra64
 CompressionThreads=auto
@@ -61,6 +61,7 @@ Source: "install\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs creat
 
 [Icons]
 Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
+Name: "{autoprograms}\{#MyAppName} Updater"; Filename: "{app}\Updater.exe"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
 
 [Run]

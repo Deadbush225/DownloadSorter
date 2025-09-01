@@ -53,6 +53,8 @@ if(WIN32)
 endif()
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES} ${app_icon_resource_windows} "./icons/icons.qrc")
+# Include the Updater subproject
+add_subdirectory(${CMAKE_SOURCE_DIR}/../Updater ${CMAKE_BINARY_DIR}/Updater)
 
 # include_directories("src/Utils" "Utils/")
 set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "Download Sorter")
@@ -141,6 +143,9 @@ set(executable_path "${executable_path}")
 
 # Install the app (goes to ${INSTALL_DIR}) and deploy Qt runtime deps
 install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION .)
+# Ensure Updater is built and installed with the main project
+add_dependencies(${PROJECT_NAME} Updater)
+
 if(APPLE OR (WIN32 AND MSVC))
     install(SCRIPT ${deploy_script})
 endif()

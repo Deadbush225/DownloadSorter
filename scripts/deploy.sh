@@ -8,7 +8,8 @@ PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD_DIR="$PROJECT_ROOT/build"
 INSTALL_DIR="$PROJECT_ROOT/install"
 SCRIPTS_DIR="$PROJECT_ROOT/scripts"
-VERSION=$(grep "VERSION" "$PROJECT_ROOT/src/CMakeLists.txt" | head -1 | sed 's/.*VERSION \([0-9.]*\).*/\1/')
+# Read version from VERSION file (single source of truth)
+VERSION=$(tr -d '\r' < "$PROJECT_ROOT/VERSION")
 
 echo "=== Download Sorter Deployment Script ==="
 echo "Version: $VERSION"
@@ -60,6 +61,10 @@ create_appimage() {
     
     # Copy application
     cp "$INSTALL_DIR/Download Sorter" "$appdir/usr/bin/"
+    # Copy updater if built
+    if [ -f "$INSTALL_DIR/Updater" ]; then
+        cp "$INSTALL_DIR/Updater" "$appdir/usr/bin/"
+    fi
     
     # Copy libraries
     cp -r "$INSTALL_DIR"/*.so* "$appdir/usr/lib/" 2>/dev/null || true
@@ -143,6 +148,10 @@ create_deb() {
     
     # Copy application and libraries
     cp "$INSTALL_DIR/Download Sorter" "$debdir/usr/lib/download-sorter/"
+    # Copy updater if built
+    if [ -f "$INSTALL_DIR/Updater" ]; then
+        cp "$INSTALL_DIR/Updater" "$debdir/usr/lib/download-sorter/"
+    fi
     cp -r "$INSTALL_DIR"/*.so* "$debdir/usr/lib/download-sorter/" 2>/dev/null || true
     
     # Create wrapper script
@@ -180,7 +189,7 @@ Maintainer: Deadbush225 <your-email@example.com>
 Description: Download Sorter - Organize your downloads automatically
  A Qt-based application that helps you automatically organize
  your downloaded files into appropriate folders.
-Depends: libc6, libqt6core6, libqt6gui6, libqt6widgets6
+Depends: libc6, libqt6core6, libqt6gui6, libqt6widgets6, libqt6network6
 EOF
     
     # Build package
