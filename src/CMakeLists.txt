@@ -178,10 +178,11 @@ if(UNIX)
     find_program(UPX_EXECUTABLE upx)
 
     if(UPX_EXECUTABLE)
+        # Compress only the main binary; avoid shell redirections that can fail on CI
         add_custom_command(TARGET install_local POST_BUILD
-            COMMAND bash -c "cd '${INSTALL_DIR}' && ${UPX_EXECUTABLE} --best 'Download Sorter' 2>/dev/null || true"
-            COMMAND bash -c "cd '${INSTALL_DIR}' && ${UPX_EXECUTABLE} --best libQt6*.so.* 2>/dev/null || true"
+            COMMAND "${UPX_EXECUTABLE}" --best "${INSTALL_DIR}/Download Sorter"
             COMMENT "Compressing binaries with UPX"
+            VERBATIM
         )
     endif()
 elseif(WIN32)
