@@ -93,29 +93,40 @@ exec "${HERE}/usr/bin/Download Sorter" "$@"
 EOF
     chmod +x "$appdir/AppRun"
     
-    # Download and use appimagetool
+    # Download appimagetool (as AppImage)
     if [ ! -f "$SCRIPTS_DIR/appimagetool" ]; then
         log_info "Downloading appimagetool..."
         mkdir -p "$SCRIPTS_DIR"
-        wget -O "$SCRIPTS_DIR/appimagetool" "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage" || {
-            log_error "Failed to download appimagetool. Creating simple tar.gz instead."
-            cd "$PROJECT_ROOT/dist"
-            tar czf "DownloadSorter-${VERSION}-x86_64.tar.gz" -C "$appdir" .
-            log_success "Archive created: dist/DownloadSorter-${VERSION}-x86_64.tar.gz"
+        wget -O "$SCRIPTS_DIR/appimagetool" "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage" || true
+        chmod +x "$SCRIPTS_DIR/appimagetool" 2>/dev/null || true
+    fi
+
+    mkdir -p "$PROJECT_ROOT/dist"
+    cd "$PROJECT_ROOT/dist"
+
+    # Try to run appimagetool normally (requires FUSE)
+    if "$SCRIPTS_DIR/appimagetool" "$appdir" "DownloadSorter-${VERSION}-x86_64.AppImage" 2>appimage.err; then
+        log_success "AppImage created: dist/DownloadSorter-${VERSION}-x86_64.AppImage"
+        return
+    fi
+
+    # If FUSE is missing, extract and run embedded appimagetool without FUSE
+    if grep -qi "libfuse" appimage.err; then
+        log_warning "FUSE not available, trying extracted appimagetool"
+        (
+            cd "$SCRIPTS_DIR" && \
+            ./appimagetool --appimage-extract >/dev/null 2>&1 && \
+            chmod +x "$SCRIPTS_DIR/squashfs-root/AppRun" && \
+            "$SCRIPTS_DIR/squashfs-root/AppRun" "$appdir" "$PROJECT_ROOT/dist/DownloadSorter-${VERSION}-x86_64.AppImage"
+        ) && {
+            log_success "AppImage created (no FUSE): dist/DownloadSorter-${VERSION}-x86_64.AppImage"
             return
         }
-        chmod +x "$SCRIPTS_DIR/appimagetool"
     fi
-    
-    cd "$PROJECT_ROOT/dist"
-    "$SCRIPTS_DIR/appimagetool" "$appdir" "DownloadSorter-${VERSION}-x86_64.AppImage" || {
-        log_warning "AppImage creation failed, creating tar.gz instead"
-        tar czf "DownloadSorter-${VERSION}-x86_64.tar.gz" -C "$appdir" .
-        log_success "Archive created: dist/DownloadSorter-${VERSION}-x86_64.tar.gz"
-        return
-    }
-    
-    log_success "AppImage created: dist/DownloadSorter-${VERSION}-x86_64.AppImage"
+
+    log_warning "AppImage creation failed, creating tar.gz instead"
+    tar czf "DownloadSorter-${VERSION}-x86_64.tar.gz" -C "$(dirname "$appdir")" "$(basename "$appdir")"
+    log_success "Archive created: dist/DownloadSorter-${VERSION}-x86_64.tar.gz"
 }
 
 # Create DEB package (Ubuntu/Debian)
@@ -187,28 +198,37 @@ EOF
 # Create RPM package (Fedora/RHEL)
 create_rpm() {
     log_info "Creating RPM package..."
-    
-    if ! command -v rpmbuild &> /dev/null; then
-        log_warning "rpmbuild not found, creating tar.gz instead"
-        local rpmdir="$PROJECT_ROOT/dist/rpm-content"
-        rm -rf "$rpmdir"
-        mkdir -p "$rpmdir/usr/bin"
-        mkdir -p "$rpmdir/usr/lib/download-sorter"
-        
-        cp "$INSTALL_DIR/Download Sorter" "$rpmdir/usr/lib/download-sorter/"
-        cp -r "$INSTALL_DIR"/*.so* "$rpmdir/usr/lib/download-sorter/" 2>/dev/null || true
-        
-        cat > "$rpmdir/usr/bin/download-sorter" << 'EOF'
-#!/bin/bash
-export LD_LIBRARY_PATH="/usr/lib/download-sorter:$LD_LIBRARY_PATH"
-exec "/usr/lib/download-sorter/Download Sorter" "$@"
-EOF
-        chmod +x "$rpmdir/usr/bin/download-sorter"
-        
+
+    # Force tarball on non-RPM distros or when requested
+    if [ "${FORCE_RPM_TARBALL:-}" = "1" ]; then
+        log_warning "FORCE_RPM_TARBALL=1 set; creating tar.gz instead of RPM"
         cd "$PROJECT_ROOT/dist"
-        tar czf "download-sorter-${VERSION}-1.x86_64.tar.gz" -C "$rpmdir" .
+        tar czf "download-sorter-${VERSION}-1.x86_64.tar.gz" -C "$INSTALL_DIR" .
         log_success "Archive created: dist/download-sorter-${VERSION}-1.x86_64.tar.gz"
         return
+    fi
+
+    # If rpmbuild not available OR distro is not Fedora/RHEL/SUSE, fallback
+    if ! command -v rpmbuild &> /dev/null; then
+        log_warning "rpmbuild not found, creating tar.gz instead"
+        cd "$PROJECT_ROOT/dist"
+        tar czf "download-sorter-${VERSION}-1.x86_64.tar.gz" -C "$INSTALL_DIR" .
+        log_success "Archive created: dist/download-sorter-${VERSION}-1.x86_64.tar.gz"
+        return
+    fi
+
+    if [ -r /etc/os-release ]; then
+        . /etc/os-release
+        case "${ID_LIKE}${ID}" in
+            *fedora*|*rhel*|*centos*|*suse*) : ;;
+            *)
+                log_warning "Non-RPM-based distro detected (${ID:-unknown}); creating tar.gz instead"
+                cd "$PROJECT_ROOT/dist"
+                tar czf "download-sorter-${VERSION}-1.x86_64.tar.gz" -C "$INSTALL_DIR" .
+                log_success "Archive created: dist/download-sorter-${VERSION}-1.x86_64.tar.gz"
+                return
+                ;;
+        esac
     fi
     
     local rpmdir="$PROJECT_ROOT/dist/rpm"
@@ -250,8 +270,8 @@ cp -r * %{buildroot}/usr/lib/%{name}/
 # Create wrapper script
 cat > %{buildroot}/usr/bin/%{name} << 'EOFSCRIPT'
 #!/bin/bash
-export LD_LIBRARY_PATH="/usr/lib/download-sorter:\$LD_LIBRARY_PATH"
-exec "/usr/lib/download-sorter/Download Sorter" "\$@"
+export LD_LIBRARY_PATH="/usr/lib/download-sorter:$LD_LIBRARY_PATH"
+exec "/usr/lib/download-sorter/Download Sorter" "$@"
 EOFSCRIPT
 chmod +x %{buildroot}/usr/bin/%{name}
 
@@ -272,15 +292,16 @@ EOF
     tar czf "$rpmdir/SOURCES/download-sorter-${VERSION}.tar.gz" *
     
     # Build RPM
-    rpmbuild --define "_topdir $rpmdir" -bb "$rpmdir/SPECS/download-sorter.spec"
-    
-    # Copy result
-    cp "$rpmdir/RPMS/x86_64/download-sorter-${VERSION}-1."*.rpm "$PROJECT_ROOT/dist/" 2>/dev/null || {
+    if ! rpmbuild --define "_topdir $rpmdir" -bb "$rpmdir/SPECS/download-sorter.spec"; then
         log_warning "RPM build failed, creating tar.gz"
         cd "$PROJECT_ROOT/dist"
         tar czf "download-sorter-${VERSION}-1.x86_64.tar.gz" -C "$INSTALL_DIR" .
-    }
+        log_success "Archive created: dist/download-sorter-${VERSION}-1.x86_64.tar.gz"
+        return
+    fi
     
+    # Copy result
+    cp "$rpmdir/RPMS/x86_64/download-sorter-${VERSION}-1."*.rpm "$PROJECT_ROOT/dist/" 2>/dev/null || true
     log_success "RPM package created in dist/"
 }
 
@@ -316,21 +337,21 @@ md5sums=()
 
 package() {
     # Install binary and libraries
-    install -dm755 "\$pkgdir/usr/lib/\$pkgname"
-    cp -r "$INSTALL_DIR"/* "\$pkgdir/usr/lib/\$pkgname/"
+    install -dm755 "$pkgdir/usr/lib/$pkgname"
+    cp -r "$INSTALL_DIR"/* "$pkgdir/usr/lib/$pkgname/"
     
     # Create wrapper script
-    install -dm755 "\$pkgdir/usr/bin"
-    cat > "\$pkgdir/usr/bin/\$pkgname" << 'EOFSCRIPT'
+    install -dm755 "$pkgdir/usr/bin"
+    cat > "$pkgdir/usr/bin/$pkgname" << 'EOFSCRIPT'
 #!/bin/bash
-export LD_LIBRARY_PATH="/usr/lib/download-sorter:\$LD_LIBRARY_PATH"
-exec "/usr/lib/download-sorter/Download Sorter" "\$@"
+export LD_LIBRARY_PATH="/usr/lib/download-sorter:$LD_LIBRARY_PATH"
+exec "/usr/lib/download-sorter/Download Sorter" "$@"
 EOFSCRIPT
-    chmod +x "\$pkgdir/usr/bin/\$pkgname"
+    chmod +x "$pkgdir/usr/bin/$pkgname"
     
     # Desktop file
-    install -dm755 "\$pkgdir/usr/share/applications"
-    cat > "\$pkgdir/usr/share/applications/\$pkgname.desktop" << 'EOFDESKTOP'
+    install -dm755 "$pkgdir/usr/share/applications"
+    cat > "$pkgdir/usr/share/applications/$pkgname.desktop" << 'EOFDESKTOP'
 [Desktop Entry]
 Name=Download Sorter
 Comment=Organize your downloads automatically
