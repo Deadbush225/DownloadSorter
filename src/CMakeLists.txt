@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.16)
-project(DownloadSorter VERSION 0.1.0)
+# Read version string from repository VERSION file
+file(READ "${CMAKE_SOURCE_DIR}/../VERSION" _VER_STR)
+string(STRIP "${_VER_STR}" PROJECT_VER)
+project(DownloadSorter VERSION ${PROJECT_VER})
 
 # Removed hardcoded Windows compiler and Qt paths to support CI environments
 # if(WIN32)

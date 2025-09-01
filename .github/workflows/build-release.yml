@@ -16,6 +16,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Read version
+        id: ver
+        run: echo "version=$(cat VERSION)" >> $GITHUB_OUTPUT
+
       - name: Install Qt6
         run: |
           sudo apt update
@@ -56,6 +60,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Read version
+        id: ver
+        shell: bash
+        run: echo "version=$(cat VERSION)" >> $GITHUB_OUTPUT
 
       - name: Install Qt6 (MinGW)
         uses: jurplel/install-qt-action@v3
@@ -111,12 +120,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Read version
+        id: ver
+        run: echo "version=$(cat VERSION)" >> $GITHUB_OUTPUT
+
       - name: Download all artifacts
         uses: actions/download-artifact@v4
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
+          name: Download Sorter v${{ steps.ver.outputs.version }}
+          tag_name: ${{ github.ref_name }}
           files: |
             linux-packages/*
             windows-installer/*

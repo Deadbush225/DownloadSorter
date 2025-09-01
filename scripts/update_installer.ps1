@@ -1,7 +1,9 @@
-# Start-Process -FilePath binarycreator.exe -ArgumentList ( "-n -c config/config.xml -p packages .\FolderCustomizerSetup-x64.exe") -NoNewWindow -Wait
+# Read version from top-level VERSION file
+$version = (Get-Content -Raw -Path "./VERSION").Trim()
+Write-Host "Building installer version $version"
 
-# Build the Windows installer with Inno Setup
-Start-Process "ISCC.exe" -ArgumentList "./installer.iss" -NoNewWindow -Wait
+# Build the Windows installer with Inno Setup, injecting version
+Start-Process "ISCC.exe" -ArgumentList "/DMyAppVersion=$version ./installer.iss" -NoNewWindow -Wait
 
-# Optionally print the produced installer path for logs
+# List the produced installer(s)
 Get-ChildItem -Path "./windows-installer" -Filter "*.exe" | ForEach-Object { Write-Host "Built installer: $($_.FullName)" }

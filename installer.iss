@@ -2,7 +2,9 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "Download Sorter"
-#define MyAppVersion "1.5"
+#ifndef MyAppVersion
+  #define MyAppVersion "0.0.0"
+#endif
 #define MyAppPublisher "My Company, Inc."
 #define MyAppURL "https://github.com/Deadbush225/DownloadSorter"
 #define MyAppExeName "Download Sorter.exe"
@@ -39,7 +41,7 @@ DisableProgramGroupPage=yes
 ; Remove the following line to run in administrative install mode (install for all users).
 PrivilegesRequired=lowest
 OutputDir=windows-installer
-OutputBaseFilename=Download-Sorter
+OutputBaseFilename=Download-Sorter-{#MyAppVersion}
 SolidCompression=yes
 Compression=lzma2/ultra64
 CompressionThreads=auto
