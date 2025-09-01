@@ -142,7 +142,8 @@ install(SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/cmake/PruneInstall.cmake")
 
 # Convenience target: copy to install and run deploy (strip in Release/MinSizeRel)
 add_custom_target(install_local
-    COMMAND ${CMAKE_COMMAND} -E rm -rf "${INSTALL_DIR}/."
+    COMMAND ${CMAKE_COMMAND} -E remove_directory "${INSTALL_DIR}"
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${INSTALL_DIR}"
     COMMAND ${CMAKE_COMMAND} --install "${CMAKE_BINARY_DIR}" --prefix "${INSTALL_DIR}" $<$<BOOL:${CMAKE_CONFIGURATION_TYPES}>:--config> $<$<BOOL:${CMAKE_CONFIGURATION_TYPES}>:$<CONFIG>> $<$<OR:$<CONFIG:Release>,$<CONFIG:MinSizeRel>>:--strip>
     DEPENDS ${PROJECT_NAME}
     COMMENT "Installing to ${INSTALL_DIR} and deploying Qt runtime dependencies"
