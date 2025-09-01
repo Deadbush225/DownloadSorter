@@ -61,7 +61,6 @@ jobs:
           host: "windows"
           target: "desktop"
           arch: "win64_msvc2022_64"
-          modules: "qtbase"
 
       - name: Build application
         run: |
