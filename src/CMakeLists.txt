@@ -113,12 +113,22 @@ if(MINGW)
     )
 endif()
 
+# Ensure RPATH allows loading libraries next to the executable on UNIX
+if(UNIX AND NOT APPLE)
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+        INSTALL_RPATH "$ORIGIN;$ORIGIN/../lib"
+        BUILD_WITH_INSTALL_RPATH OFF
+    )
+endif()
+
 # Create the runtime deploy script, that gathers all the dependencies. Equivalent of "windeployqt", but with filters
-set(deploy_script "${CMAKE_CURRENT_BINARY_DIR}/deploy_${PROJECT_NAME}.cmake")
-file(GENERATE OUTPUT "${deploy_script}" CONTENT "
-set(QT_DEPLOY_BIN_DIR \".\")
-set(QT_DEPLOY_LIB_DIR \".\")
-set(QT_DEPLOY_PLUGINS_DIR \".\")  # optional when passing PLUGINS_DIR
+# Only used on platforms where Qt provides deploy tools (Windows/macOS). On Linux, skip this step.
+if(WIN32 OR APPLE)
+    set(deploy_script "${CMAKE_CURRENT_BINARY_DIR}/deploy_${PROJECT_NAME}.cmake")
+    file(GENERATE OUTPUT "${deploy_script}" CONTENT "
+set(QT_DEPLOY_BIN_DIR ".")
+set(QT_DEPLOY_LIB_DIR ".")
+set(QT_DEPLOY_PLUGINS_DIR ".")  # optional when passing PLUGINS_DIR
 
 # This file is generated at generate-time and executed at install time
 set(QT_DEPLOY_EXCLUDE_MODULES \"Network;NetworkInformation;NetworkAuth\")
@@ -132,10 +142,13 @@ qt_deploy_runtime_dependencies(
     NO_TRANSLATIONS
 )
 ")
+endif()
 
 # Install the app (goes to ${INSTALL_DIR}/bin) and deploy Qt runtime deps
 install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION .)
-install(SCRIPT ${deploy_script})
+if(WIN32 OR APPLE)
+    install(SCRIPT ${deploy_script})
+endif()
 
 # Prune optional/banned bits that may remain or from previous installs using a script file
 install(SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/cmake/PruneInstall.cmake")
