@@ -27,16 +27,67 @@ set(PROJECT_NAME DownloadSorter)
 find_package(Qt6 REQUIRED COMPONENTS Widgets Core)
 qt_standard_project_setup()
 
+# Debug Qt installation
+message(STATUS "=== Qt Installation Debug ===")
+message(STATUS "Qt6_FOUND: ${Qt6_FOUND}")
+message(STATUS "Qt6_VERSION: ${Qt6_VERSION}")
+message(STATUS "Qt6_DIR: ${Qt6_DIR}")
+message(STATUS "Qt6Core_DIR: ${Qt6Core_DIR}")
+message(STATUS "Qt6Widgets_DIR: ${Qt6Widgets_DIR}")
+get_target_property(QT_LOCATION Qt6::Core LOCATION)
+message(STATUS "Qt6::Core location: ${QT_LOCATION}")
+message(STATUS "================================")
+
 # Enable Qt deployment support
 if(Qt6_FOUND AND (APPLE OR (WIN32 AND MSVC)))
     # Qt6 deployment support is available from Qt 6.3+
     if(Qt6_VERSION VERSION_GREATER_EQUAL "6.3.0")
-        # This will make qt_deploy_runtime_dependencies available
-        include(${Qt6_DIR}/Qt6DeploySupport.cmake OPTIONAL RESULT_VARIABLE QT_DEPLOY_SUPPORT_INCLUDED)
-        if(QT_DEPLOY_SUPPORT_INCLUDED)
-            message(STATUS "Qt6 deployment support enabled")
+        # Try multiple possible locations for Qt6DeploySupport.cmake
+        set(QT_DEPLOY_SUPPORT_PATHS
+            "${Qt6_DIR}/Qt6DeploySupport.cmake"
+            "${Qt6_DIR}/../Qt6DeploySupport.cmake"
+            "${Qt6Core_DIR}/Qt6DeploySupport.cmake"
+            "${Qt6Core_DIR}/../Qt6DeploySupport.cmake"
+            "${Qt6Widgets_DIR}/Qt6DeploySupport.cmake"
+            "${Qt6Widgets_DIR}/../Qt6DeploySupport.cmake"
+        )
+        
+        # Try to find the Qt installation prefix
+        get_target_property(QT_CORE_LOCATION Qt6::Core LOCATION)
+        if(QT_CORE_LOCATION)
+            get_filename_component(QT_BIN_DIR ${QT_CORE_LOCATION} DIRECTORY)
+            get_filename_component(QT_INSTALL_PREFIX ${QT_BIN_DIR} DIRECTORY)
+            list(APPEND QT_DEPLOY_SUPPORT_PATHS
+                "${QT_INSTALL_PREFIX}/lib/cmake/Qt6/Qt6DeploySupport.cmake"
+                "${QT_INSTALL_PREFIX}/../lib/cmake/Qt6/Qt6DeploySupport.cmake"
+            )
+        endif()
+        
+        set(QT_DEPLOY_SUPPORT_INCLUDED FALSE)
+        message(STATUS "Searching for Qt6DeploySupport.cmake in:")
+        foreach(deploy_path ${QT_DEPLOY_SUPPORT_PATHS})
+            message(STATUS "  ${deploy_path}")
+            if(EXISTS "${deploy_path}" AND NOT QT_DEPLOY_SUPPORT_INCLUDED)
+                include("${deploy_path}")
+                set(QT_DEPLOY_SUPPORT_INCLUDED TRUE)
+                set(QT_DEPLOY_SUPPORT_FILE "${deploy_path}")
+                message(STATUS "Qt6 deployment support enabled from: ${deploy_path}")
+                break()
+            endif()
+        endforeach()
+        
+        if(NOT QT_DEPLOY_SUPPORT_INCLUDED)
+            message(WARNING "Qt6DeploySupport.cmake not found in any of these locations:")
+            foreach(deploy_path ${QT_DEPLOY_SUPPORT_PATHS})
+                message(WARNING "  ${deploy_path}")
+            endforeach()
         else()
-            message(WARNING "Qt6DeploySupport.cmake not found at ${Qt6_DIR}/Qt6DeploySupport.cmake")
+            # Verify that the deployment command is available
+            if(COMMAND qt_deploy_runtime_dependencies)
+                message(STATUS "✓ qt_deploy_runtime_dependencies command is available")
+            else()
+                message(WARNING "qt_deploy_runtime_dependencies command not available after including deployment support")
+            endif()
         endif()
     else()
         message(WARNING "Qt deployment requires Qt 6.3 or later (found ${Qt6_VERSION})")
@@ -149,6 +200,10 @@ if(APPLE OR(WIN32 AND MSVC))
         set(deploy_script "${CMAKE_CURRENT_BINARY_DIR}/deploy_${PROJECT_NAME}.cmake")
         set(MAIN_BASENAME "Download Sorter")
         set(UPDATER_BASENAME "Updater")
+        # Make sure QT_DEPLOY_SUPPORT_FILE is available for template substitution
+        if(NOT DEFINED QT_DEPLOY_SUPPORT_FILE)
+            set(QT_DEPLOY_SUPPORT_FILE "${Qt6_DIR}/Qt6DeploySupport.cmake")
+        endif()
         configure_file(
             "${CMAKE_CURRENT_SOURCE_DIR}/cmake/DeployRuntime.cmake.in"
             "${deploy_script}"
