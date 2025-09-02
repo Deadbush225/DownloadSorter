@@ -160,8 +160,6 @@ jobs:
         run: |
           pwsh -ExecutionPolicy Bypass -File "./scripts/update_installer.ps1"
 
-      - name: Final size analysis
-
       - name: Create Windows installer
         run: |
           pwsh -ExecutionPolicy Bypass -File "./scripts/update_installer.ps1"
