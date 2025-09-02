@@ -9,7 +9,8 @@ $updaterExe = Join-Path $installDir "Updater.exe"
 
 # If Qt DLLs not present (e.g., deploy skipped), try windeployqt as fallback
 $qtDllPresent = Test-Path (Join-Path $installDir "Qt6Core.dll")
-if (-not $qtDllPresent) {
+# if (-not $qtDllPresent) {
+if ($false) { 
   Write-Host "Qt runtime not found in install/. Attempting windeployqt fallback..."
   $qtDir = $env:Qt6_DIR
   if (-not $qtDir) { throw "Qt6_DIR environment variable not set" }
