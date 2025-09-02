@@ -38,60 +38,44 @@ get_target_property(QT_LOCATION Qt6::Core LOCATION)
 message(STATUS "Qt6::Core location: ${QT_LOCATION}")
 message(STATUS "================================")
 
-# Enable Qt deployment support
-if(Qt6_FOUND AND (APPLE OR (WIN32 AND MSVC)))
-    # Qt6 deployment support is available from Qt 6.3+
-    if(Qt6_VERSION VERSION_GREATER_EQUAL "6.3.0")
-        # Try multiple possible locations for Qt6DeploySupport.cmake
-        set(QT_DEPLOY_SUPPORT_PATHS
-            "${Qt6_DIR}/Qt6DeploySupport.cmake"
-            "${Qt6_DIR}/../Qt6DeploySupport.cmake"
-            "${Qt6Core_DIR}/Qt6DeploySupport.cmake"
-            "${Qt6Core_DIR}/../Qt6DeploySupport.cmake"
-            "${Qt6Widgets_DIR}/Qt6DeploySupport.cmake"
-            "${Qt6Widgets_DIR}/../Qt6DeploySupport.cmake"
-        )
-        
-        # Try to find the Qt installation prefix
-        get_target_property(QT_CORE_LOCATION Qt6::Core LOCATION)
-        if(QT_CORE_LOCATION)
-            get_filename_component(QT_BIN_DIR ${QT_CORE_LOCATION} DIRECTORY)
-            get_filename_component(QT_INSTALL_PREFIX ${QT_BIN_DIR} DIRECTORY)
-            list(APPEND QT_DEPLOY_SUPPORT_PATHS
-                "${QT_INSTALL_PREFIX}/lib/cmake/Qt6/Qt6DeploySupport.cmake"
-                "${QT_INSTALL_PREFIX}/../lib/cmake/Qt6/Qt6DeploySupport.cmake"
-            )
-        endif()
-        
-        set(QT_DEPLOY_SUPPORT_INCLUDED FALSE)
-        message(STATUS "Searching for Qt6DeploySupport.cmake in:")
-        foreach(deploy_path ${QT_DEPLOY_SUPPORT_PATHS})
-            message(STATUS "  ${deploy_path}")
-            if(EXISTS "${deploy_path}" AND NOT QT_DEPLOY_SUPPORT_INCLUDED)
-                include("${deploy_path}")
-                set(QT_DEPLOY_SUPPORT_INCLUDED TRUE)
-                set(QT_DEPLOY_SUPPORT_FILE "${deploy_path}")
-                message(STATUS "Qt6 deployment support enabled from: ${deploy_path}")
-                break()
-            endif()
-        endforeach()
-        
-        if(NOT QT_DEPLOY_SUPPORT_INCLUDED)
-            message(WARNING "Qt6DeploySupport.cmake not found in any of these locations:")
-            foreach(deploy_path ${QT_DEPLOY_SUPPORT_PATHS})
-                message(WARNING "  ${deploy_path}")
-            endforeach()
+# Find windeployqt for Windows deployment
+if(WIN32)
+    # Find windeployqt executable
+    get_target_property(QT_QMAKE_EXECUTABLE Qt6::qmake IMPORTED_LOCATION)
+    if(QT_QMAKE_EXECUTABLE)
+        get_filename_component(QT_WINDEPLOYQT_EXECUTABLE ${QT_QMAKE_EXECUTABLE} PATH)
+        set(QT_WINDEPLOYQT_EXECUTABLE "${QT_WINDEPLOYQT_EXECUTABLE}/windeployqt.exe")
+        if(EXISTS ${QT_WINDEPLOYQT_EXECUTABLE})
+            message(STATUS "Found windeployqt: ${QT_WINDEPLOYQT_EXECUTABLE}")
+            set(QT_DEPLOY_TOOL_FOUND TRUE)
         else()
-            # Verify that the deployment command is available
-            if(COMMAND qt_deploy_runtime_dependencies)
-                message(STATUS "✓ qt_deploy_runtime_dependencies command is available")
-            else()
-                message(WARNING "qt_deploy_runtime_dependencies command not available after including deployment support")
-            endif()
+            message(WARNING "windeployqt not found at: ${QT_WINDEPLOYQT_EXECUTABLE}")
+            set(QT_DEPLOY_TOOL_FOUND FALSE)
         endif()
     else()
-        message(WARNING "Qt deployment requires Qt 6.3 or later (found ${Qt6_VERSION})")
+        message(WARNING "Qt6::qmake target not found, cannot locate windeployqt")
+        set(QT_DEPLOY_TOOL_FOUND FALSE)
     endif()
+elseif(APPLE)
+    # Find macdeployqt for macOS deployment
+    get_target_property(QT_QMAKE_EXECUTABLE Qt6::qmake IMPORTED_LOCATION)
+    if(QT_QMAKE_EXECUTABLE)
+        get_filename_component(QT_MACDEPLOYQT_EXECUTABLE ${QT_QMAKE_EXECUTABLE} PATH)
+        set(QT_MACDEPLOYQT_EXECUTABLE "${QT_MACDEPLOYQT_EXECUTABLE}/macdeployqt")
+        if(EXISTS ${QT_MACDEPLOYQT_EXECUTABLE})
+            message(STATUS "Found macdeployqt: ${QT_MACDEPLOYQT_EXECUTABLE}")
+            set(QT_DEPLOY_TOOL_FOUND TRUE)
+        else()
+            message(WARNING "macdeployqt not found at: ${QT_MACDEPLOYQT_EXECUTABLE}")
+            set(QT_DEPLOY_TOOL_FOUND FALSE)
+        endif()
+    else()
+        message(WARNING "Qt6::qmake target not found, cannot locate macdeployqt")
+        set(QT_DEPLOY_TOOL_FOUND FALSE)
+    endif()
+else()
+    message(STATUS "Qt deployment tools not needed on this platform")
+    set(QT_DEPLOY_TOOL_FOUND FALSE)
 endif()
 
 file(GLOB_RECURSE SourceFiles "./DownloadSorter/*.cpp")
@@ -194,16 +178,12 @@ if(UNIX AND NOT APPLE)
     )
 endif()
 
-# Create the runtime deploy script only on platforms where Qt provides deploy tools (Windows MSVC/macOS). On Linux and Windows MinGW, skip.
-if(APPLE OR(WIN32 AND MSVC))
-    if(QT_DEPLOY_SUPPORT_INCLUDED)
+# Create the runtime deploy script only on platforms where Qt provides deploy tools
+if(WIN32 OR APPLE)
+    if(QT_DEPLOY_TOOL_FOUND)
         set(deploy_script "${CMAKE_CURRENT_BINARY_DIR}/deploy_${PROJECT_NAME}.cmake")
         set(MAIN_BASENAME "Download Sorter")
         set(UPDATER_BASENAME "Updater")
-        # Make sure QT_DEPLOY_SUPPORT_FILE is available for template substitution
-        if(NOT DEFINED QT_DEPLOY_SUPPORT_FILE)
-            set(QT_DEPLOY_SUPPORT_FILE "${Qt6_DIR}/Qt6DeploySupport.cmake")
-        endif()
         configure_file(
             "${CMAKE_CURRENT_SOURCE_DIR}/cmake/DeployRuntime.cmake.in"
             "${deploy_script}"
@@ -211,10 +191,10 @@ if(APPLE OR(WIN32 AND MSVC))
         )
         message(STATUS "Qt deployment script configured: ${deploy_script}")
     else()
-        message(STATUS "Skipping Qt deploy script (Qt6 deployment support not available)")
+        message(STATUS "Skipping Qt deploy script (Qt deployment tool not found)")
     endif()
 else()
-    message(STATUS "Qt deployment not supported on this platform/compiler")
+    message(STATUS "Qt deployment not needed on this platform")
 endif()
 
 # Variables for deploy template substitution
@@ -225,13 +205,13 @@ set(executable_path "${executable_path}")
 # Install the app (goes to ${INSTALL_DIR}) and deploy Qt runtime deps
 install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION .)
 
-if(APPLE OR(WIN32 AND MSVC))
-    if(QT_DEPLOY_SUPPORT_INCLUDED)
+if(WIN32 OR APPLE)
+    if(QT_DEPLOY_TOOL_FOUND)
         # Pass CMAKE_INSTALL_PREFIX at install time
         message(STATUS "Will install Qt deploy script: ${deploy_script}")
         install(SCRIPT ${deploy_script})
     else()
-        message(STATUS "Skipping Qt deploy script (Qt6 deployment support not available)")
+        message(STATUS "Skipping Qt deploy script (Qt deployment tool not found)")
     endif()
 endif()
 
