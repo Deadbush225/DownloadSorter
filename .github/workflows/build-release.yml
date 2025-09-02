@@ -106,21 +106,37 @@ jobs:
           Write-Host "=== Checking Qt deployment success ==="
           $qtDlls = @("Qt6Core.dll", "Qt6Gui.dll", "Qt6Widgets.dll")
           $deploymentSuccess = $true
+
           foreach ($dll in $qtDlls) {
-            $path = "./install/$dll"
-            if (Test-Path $path) {
-              $size = [math]::Round((Get-Item $path).Length / 1MB, 2)
-              Write-Host "✓ Found: $dll (${size}MB)"
+            # Search recursively in install directory
+            $matches = Get-ChildItem -Path "./install" -Filter $dll -Recurse -ErrorAction SilentlyContinue
+            if ($matches) {
+              foreach ($match in $matches) {
+                $size = [math]::Round($match.Length / 1MB, 2)
+                $relativePath = $match.FullName.Replace((Resolve-Path "./install").Path, "").TrimStart('\')
+                Write-Host "✓ Found: $relativePath (${size}MB)"
+              }
             } else {
               Write-Host "✗ Missing: $dll"
               $deploymentSuccess = $false
             }
           }
+
+          # Also show what files are actually in the install directory
+          Write-Host "`n=== Install directory contents ==="
+          Get-ChildItem -Recurse "./install" | ForEach-Object {
+            if (-not $_.PSIsContainer) {
+              $size = [math]::Round($_.Length / 1MB, 2)
+              $relativePath = $_.FullName.Replace((Resolve-Path "./install").Path, "").TrimStart('\')
+              Write-Host "$relativePath : ${size}MB"
+            }
+          }
+
           if (-not $deploymentSuccess) {
-            Write-Host "Qt deployment failed - enabling windeployqt fallback"
+            Write-Host "`nQt deployment failed - enabling windeployqt fallback"
             exit 1
           } else {
-            Write-Host "Qt deployment successful!"
+            Write-Host "`nQt deployment successful!"
           }
 
       - name: Fallback Qt deployment (if previous step failed)
