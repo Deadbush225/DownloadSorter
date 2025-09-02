@@ -1,20 +1,36 @@
-# Generated at configure time
+# Generated at configure time - Qt deployment script
+# This script runs during the install phase to deploy Qt runtime dependencies
+
+message(STATUS "=== Qt Deploy Runtime Script Executing ===")
+message(STATUS "CMAKE_INSTALL_PREFIX: ${CMAKE_INSTALL_PREFIX}")
+
+# Set Qt installation directory from configure time
+set(Qt6_DIR "@Qt6_DIR@")
+message(STATUS "Qt6_DIR: ${Qt6_DIR}")
+
+# Include Qt deployment support
+if(EXISTS "${Qt6_DIR}/Qt6DeploySupport.cmake")
+    include("${Qt6_DIR}/Qt6DeploySupport.cmake")
+    message(STATUS "✓ Included Qt6DeploySupport.cmake")
+else()
+    message(FATAL_ERROR "Qt6DeploySupport.cmake not found at: ${Qt6_DIR}/Qt6DeploySupport.cmake")
+endif()
+
+# Verify that the deployment command is available
+if(NOT COMMAND qt_deploy_runtime_dependencies)
+    message(FATAL_ERROR "qt_deploy_runtime_dependencies command not available after including Qt6DeploySupport.cmake")
+endif()
+
+# Deployment configuration
 set(QT_DEPLOY_BIN_DIR ".")
 set(QT_DEPLOY_LIB_DIR ".")
-set(QT_DEPLOY_PLUGINS_DIR ".")  # optional when passing PLUGINS_DIR
+set(QT_DEPLOY_PLUGINS_DIR ".")
 
-# Exclusions and plugin selection
+# Exclusions and plugin selection  
 set(QT_DEPLOY_EXCLUDE_MODULES "Network;NetworkInformation;NetworkAuth;OpenGL;OpenGLWidgets")
 set(QT_DEPLOY_EXCLUDE_PLUGINS "tls;*;networkinformation;*;bearer;*;imageformats;qgif;qjpeg;qsvg;generic;qtuiotouchplugin;")
 set(QT_DEPLOY_EXCLUDE_LIBRARIES "@QT_DEPLOY_EXCLUDE_LIBS_LIST@")
 set(QT_DEPLOY_PLUGINS "@QT_DEPLOY_PLUGINS_LIST@")
-
-message(STATUS "=== Qt Deploy Runtime Script Executing ===")
-message(STATUS "CMAKE_INSTALL_PREFIX: ${CMAKE_INSTALL_PREFIX}")
-message(STATUS "QT_DEPLOY_SUPPORT_FILE: @QT_DEPLOY_SUPPORT_FILE@")
-
-# Invoke Qt deploy support (absolute file path)
-include("@QT_DEPLOY_SUPPORT_FILE@")
 
 # Compute installed executable paths
 if(WIN32)
