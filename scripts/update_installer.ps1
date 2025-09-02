@@ -9,7 +9,9 @@ $updaterExe = Join-Path $installDir "Updater.exe"
 
 # If Qt DLLs not present (e.g., deploy skipped), try windeployqt as fallback
 $qtDllPresent = Test-Path (Join-Path $installDir "Qt6Core.dll")
-# if (-not $qtDllPresent) {
+Write-Host "Qt6Core.dll present: $qtDllPresent"
+
+# Disable windeployqt completely - CMake qt_deploy_runtime_dependencies should handle this
 if ($false) { 
   Write-Host "Qt runtime not found in install/. Attempting windeployqt fallback..."
   $qtDir = $env:Qt6_DIR
@@ -18,6 +20,8 @@ if ($false) {
   if (-not (Test-Path $windeploy)) { throw "windeployqt not found at $windeploy" }
   & $windeploy --release --dir "$installDir" "$mainExe"
   if (Test-Path $updaterExe) { & $windeploy --release --dir "$installDir" "$updaterExe" }
+} else {
+  Write-Host "Skipping windeployqt - relying on CMake qt_deploy_runtime_dependencies"
 }
 
 # Build the Windows installer with Inno Setup, injecting version

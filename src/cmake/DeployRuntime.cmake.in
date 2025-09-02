@@ -9,6 +9,10 @@ set(QT_DEPLOY_EXCLUDE_PLUGINS "tls;*;networkinformation;*;bearer;*;imageformats;
 set(QT_DEPLOY_EXCLUDE_LIBRARIES "@QT_DEPLOY_EXCLUDE_LIBS_LIST@")
 set(QT_DEPLOY_PLUGINS "@QT_DEPLOY_PLUGINS_LIST@")
 
+message(STATUS "=== Qt Deploy Runtime Script Executing ===")
+message(STATUS "CMAKE_INSTALL_PREFIX: ${CMAKE_INSTALL_PREFIX}")
+message(STATUS "QT_DEPLOY_SUPPORT_FILE: @QT_DEPLOY_SUPPORT_FILE@")
+
 # Invoke Qt deploy support (absolute file path)
 include("@QT_DEPLOY_SUPPORT_FILE@")
 
@@ -24,6 +28,10 @@ else()
     set(_UPDATER_EXE "${CMAKE_INSTALL_PREFIX}/@UPDATER_BASENAME@")
 endif()
 
+message(STATUS "Main executable: ${_MAIN_EXE}")
+message(STATUS "Updater executable: ${_UPDATER_EXE}")
+message(STATUS "Deploying Qt runtime dependencies...")
+
 # Deploy main app
 qt_deploy_runtime_dependencies(
     EXECUTABLE "${_MAIN_EXE}"
@@ -35,8 +43,11 @@ qt_deploy_runtime_dependencies(
     NO_TRANSLATIONS
 )
 
+message(STATUS "Main app Qt deployment completed")
+
 # Deploy Updater if present
 if(EXISTS "${_UPDATER_EXE}")
+    message(STATUS "Deploying Updater Qt dependencies...")
     qt_deploy_runtime_dependencies(
         EXECUTABLE "${_UPDATER_EXE}"
         PLUGINS "${QT_DEPLOY_PLUGINS}"
@@ -46,4 +57,9 @@ if(EXISTS "${_UPDATER_EXE}")
         PLUGINS_DIR .
         NO_TRANSLATIONS
     )
+    message(STATUS "Updater Qt deployment completed")
+else()
+    message(STATUS "Updater executable not found, skipping deployment")
 endif()
+
+message(STATUS "=== Qt Deploy Runtime Script Finished ===")

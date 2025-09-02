@@ -136,24 +136,40 @@ if(APPLE OR(WIN32 AND MSVC))
         message(FATAL_ERROR "Qt6_DIR is not defined; ensure CMAKE_PREFIX_PATH points to the Qt installation")
     endif()
 
+    message(STATUS "Qt6_DIR: ${Qt6_DIR}")
+    message(STATUS "CMAKE_PREFIX_PATH: ${CMAKE_PREFIX_PATH}")
+
     # Try typical relative path to Qt6DeploySupport.cmake
     set(_QT_DEPLOY_SUPPORT_CANDIDATES
         "${Qt6_DIR}/Qt6DeploySupport.cmake"
+        "${Qt6_DIR}/../Qt6DeploySupport.cmake"
+        "${Qt6_DIR}/../../Qt6DeploySupport.cmake"
+        "${Qt6_DIR}/../../../lib/cmake/Qt6/Qt6DeploySupport.cmake"
         "${Qt6_DIR}/../../lib/cmake/Qt6/Qt6DeploySupport.cmake"
         "${Qt6_DIR}/../lib/cmake/Qt6/Qt6DeploySupport.cmake"
         "${Qt6_DIR}/lib/cmake/Qt6/Qt6DeploySupport.cmake"
+        "${CMAKE_PREFIX_PATH}/lib/cmake/Qt6/Qt6DeploySupport.cmake"
+        "${CMAKE_PREFIX_PATH}/Qt6DeploySupport.cmake"
     )
     set(QT_DEPLOY_SUPPORT_FILE "")
 
     foreach(p IN LISTS _QT_DEPLOY_SUPPORT_CANDIDATES)
+        message(STATUS "Checking for Qt6DeploySupport.cmake at: ${p}")
         if(EXISTS "${p}")
             set(QT_DEPLOY_SUPPORT_FILE "${p}")
+            message(STATUS "Found Qt6DeploySupport.cmake at: ${p}")
             break()
         endif()
     endforeach()
 
     if(NOT QT_DEPLOY_SUPPORT_FILE)
         message(WARNING "Qt6DeploySupport.cmake not found; skipping Qt CMake deploy. Installer will rely on windeployqt fallback.")
+        message(STATUS "Searched in these locations:")
+        foreach(p IN LISTS _QT_DEPLOY_SUPPORT_CANDIDATES)
+            message(STATUS "  - ${p}")
+        endforeach()
+    else()
+        message(STATUS "Using Qt deploy support file: ${QT_DEPLOY_SUPPORT_FILE}")
     endif()
 
     set(deploy_script "${CMAKE_CURRENT_BINARY_DIR}/deploy_${PROJECT_NAME}.cmake")
@@ -177,7 +193,10 @@ install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION .)
 if(APPLE OR(WIN32 AND MSVC))
     if(QT_DEPLOY_SUPPORT_FILE)
         # Pass CMAKE_INSTALL_PREFIX at install time
+        message(STATUS "Will install Qt deploy script: ${deploy_script}")
         install(SCRIPT ${deploy_script})
+    else()
+        message(STATUS "Skipping Qt deploy script (Qt6DeploySupport.cmake not found)")
     endif()
 endif()
 

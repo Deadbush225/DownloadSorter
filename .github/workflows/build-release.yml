@@ -77,27 +77,77 @@ jobs:
       - name: Build application (MSVC)
         run: |
           cd src
-          cmake -B build -G "Visual Studio 17 2022" -A x64 -DCMAKE_PREFIX_PATH="${{ env.Qt6_DIR }}"
+          cmake -B build -G "Visual Studio 17 2022" -A x64 -DCMAKE_PREFIX_PATH="${{ env.Qt6_DIR }}" --debug-output
           cmake --build build --config Release -j 4
-          cmake --build build --target install_local --config Release -j 2
+
+      - name: Debug Qt paths
+        shell: pwsh
+        run: |
+          Write-Host "=== Qt Environment Debug ==="
+          Write-Host "Qt6_DIR: $env:Qt6_DIR"
+          Write-Host "CMAKE_PREFIX_PATH: ${{ env.Qt6_DIR }}"
+          if (Test-Path "${{ env.Qt6_DIR }}/Qt6DeploySupport.cmake") {
+            Write-Host "Found Qt6DeploySupport.cmake at: ${{ env.Qt6_DIR }}/Qt6DeploySupport.cmake"
+          } else {
+            Write-Host "Qt6DeploySupport.cmake not found in Qt6_DIR"
+          }
+          Get-ChildItem -Path "${{ env.Qt6_DIR }}" -Filter "*Deploy*" -Recurse | ForEach-Object {
+            Write-Host "Found deploy file: $($_.FullName)"
+          }
+
+      - name: Install and deploy Qt dependencies
+        run: |
+          cd src
+          cmake --build build --target install_local --config Release -j 2 --verbose
+
+      - name: Verify Qt deployment
+        shell: pwsh
+        run: |
+          Write-Host "=== Checking Qt deployment success ==="
+          $qtDlls = @("Qt6Core.dll", "Qt6Gui.dll", "Qt6Widgets.dll")
+          $deploymentSuccess = $true
+          foreach ($dll in $qtDlls) {
+            $path = "./install/$dll"
+            if (Test-Path $path) {
+              $size = [math]::Round((Get-Item $path).Length / 1MB, 2)
+              Write-Host "✓ Found: $dll (${size}MB)"
+            } else {
+              Write-Host "✗ Missing: $dll"
+              $deploymentSuccess = $false
+            }
+          }
+          if (-not $deploymentSuccess) {
+            Write-Host "Qt deployment failed - enabling windeployqt fallback"
+            exit 1
+          } else {
+            Write-Host "Qt deployment successful!"
+          }
+
+      - name: Fallback Qt deployment (if previous step failed)
+        if: failure()
+        shell: pwsh
+        run: |
+          Write-Host "=== Running windeployqt fallback ==="
+          $qtDir = "${{ env.Qt6_DIR }}"
+          $windeploy = Join-Path $qtDir "bin/windeployqt.exe"
+          $mainExe = "./install/Download Sorter.exe"
+          $updaterExe = "./install/Updater.exe"
+
+          if (Test-Path $windeploy) {
+            Write-Host "Running windeployqt for main application..."
+            & $windeploy --release --dir "./install" $mainExe
+            if (Test-Path $updaterExe) {
+              Write-Host "Running windeployqt for updater..."
+              & $windeploy --release --dir "./install" $updaterExe
+            }
+          } else {
+            Write-Host "windeployqt not found at $windeploy"
+            exit 1
+          }
 
       - name: Install Inno Setup
         run: |
           choco install innosetup
-
-      - name: Analyze deployment size
-        shell: pwsh
-        run: |
-          Write-Host "=== Install directory contents ==="
-          Get-ChildItem -Recurse "./install" | ForEach-Object {
-            if (-not $_.PSIsContainer) {
-              $size = [math]::Round($_.Length / 1MB, 2)
-              $relativePath = $_.FullName.Replace((Resolve-Path "./install").Path, "").TrimStart('\')
-              Write-Host "$relativePath : ${size}MB"
-            }
-          }
-          $totalSize = (Get-ChildItem -Recurse "./install" | Measure-Object -Property Length -Sum).Sum
-          Write-Host "Total size: $([math]::Round($totalSize / 1MB, 2))MB"
 
       - name: Analyze deployment size
         shell: pwsh
@@ -156,9 +206,19 @@ jobs:
 
           Write-Host "Total space saved by additional cleanup: $([math]::Round($totalRemoved / 1MB, 2))MB"
 
-      - name: Create Windows installer
+      - name: Final size analysis
+        shell: pwsh
         run: |
-          pwsh -ExecutionPolicy Bypass -File "./scripts/update_installer.ps1"
+          Write-Host "=== Final install directory analysis ==="
+          $totalSize = (Get-ChildItem -Recurse "./install" | Measure-Object -Property Length -Sum).Sum
+          Write-Host "Final total size: $([math]::Round($totalSize / 1MB, 2))MB"
+
+          Write-Host "`n=== Remaining files by size ==="
+          Get-ChildItem -Recurse "./install" | Where-Object { -not $_.PSIsContainer } | Sort-Object Length -Descending | ForEach-Object {
+            $size = [math]::Round($_.Length / 1MB, 2)
+            $relativePath = $_.FullName.Replace((Resolve-Path "./install").Path, "").TrimStart('\')
+            Write-Host "$relativePath : ${size}MB"
+          }
 
       - name: Create Windows installer
         run: |
