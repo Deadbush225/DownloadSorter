@@ -117,7 +117,12 @@ do_install() {
         INSTALL_DIR="$SCRIPT_DIR/install"
     fi
 
-    if [ ! -f "$INSTALL_DIR/Download Sorter" ]; then
+    # Resolve built binary name
+    if [ -f "$INSTALL_DIR/DownloadSorter" ]; then
+        BIN_SRC="DownloadSorter"
+    elif [ -f "$INSTALL_DIR/Download Sorter" ]; then
+        BIN_SRC="Download Sorter"
+    else
         log_error "Build not found. Please build the project first:"
         echo "  cd $SCRIPT_DIR/src"
         echo "  cmake -B build -DCMAKE_BUILD_TYPE=Release"
@@ -143,7 +148,7 @@ do_install() {
 
     # Install application and libraries
     log_info "Installing Download Sorter..."
-    cp "$INSTALL_DIR/Download Sorter" "$INSTALL_PREFIX/lib/download-sorter/"
+    cp "$INSTALL_DIR/$BIN_SRC" "$INSTALL_PREFIX/lib/download-sorter/"
     cp "$INSTALL_DIR/manifest.json" "$INSTALL_PREFIX/lib/download-sorter/"
 
     # Install updater if available
@@ -163,7 +168,7 @@ do_install() {
     cat > "$INSTALL_PREFIX/bin/download-sorter" << EOF
 #!/bin/bash
 export LD_LIBRARY_PATH="$INSTALL_PREFIX/lib/download-sorter:\$LD_LIBRARY_PATH"
-exec "$INSTALL_PREFIX/lib/download-sorter/Download Sorter" "\$@"
+exec "$INSTALL_PREFIX/lib/download-sorter/$BIN_SRC" "\$@"
 EOF
     chmod +x "$INSTALL_PREFIX/bin/download-sorter"
 

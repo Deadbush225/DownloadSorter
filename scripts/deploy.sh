@@ -40,7 +40,11 @@ log_error() {
 
 # Check if build exists
 check_build() {
-    if [ ! -f "$INSTALL_DIR/Download Sorter" ]; then
+    if [ -f "$INSTALL_DIR/DownloadSorter" ]; then
+        BIN_NAME="DownloadSorter"
+    elif [ -f "$INSTALL_DIR/Download Sorter" ]; then
+        BIN_NAME="Download Sorter"
+    else
         log_error "Build not found. Please build the project first:"
         echo "  cd $PROJECT_ROOT/src"
         echo "  cmake -B build -DCMAKE_BUILD_TYPE=Release"
@@ -60,7 +64,7 @@ create_appimage() {
     mkdir -p "$appdir/usr/lib"
     
     # Copy application
-    cp "$INSTALL_DIR/Download Sorter" "$appdir/usr/bin/"
+        cp "$INSTALL_DIR/$BIN_NAME" "$appdir/usr/bin/DownloadSorter"
     # Copy updater if built
     if [ -f "$INSTALL_DIR/Updater" ]; then
         cp "$INSTALL_DIR/Updater" "$appdir/usr/bin/"
@@ -75,7 +79,7 @@ create_appimage() {
 Type=Application
 Name=Download Sorter
 Comment=Organize your downloads automatically
-Exec=Download Sorter
+    Exec=DownloadSorter
 Icon=download-sorter
 Categories=Utility;FileManager;
 EOF
@@ -94,7 +98,7 @@ EOF
 #!/bin/bash
 HERE="$(dirname "$(readlink -f "${0}")")"
 export LD_LIBRARY_PATH="${HERE}/usr/lib:${LD_LIBRARY_PATH}"
-exec "${HERE}/usr/bin/Download Sorter" "$@"
+    exec "${HERE}/usr/bin/DownloadSorter" "$@"
 EOF
     chmod +x "$appdir/AppRun"
     
@@ -129,7 +133,7 @@ EOF
         }
     fi
 
-    log_warning "AppImage creation failed, creating tar.gz instead"
+        exec "/usr/lib/download-sorter/\$BIN_NAME" "\$@"
     tar czf "DownloadSorter-${VERSION}-x86_64.tar.gz" -C "$(dirname "$appdir")" "$(basename "$appdir")"
     log_success "Archive created: dist/DownloadSorter-${VERSION}-x86_64.tar.gz"
 }
@@ -147,7 +151,7 @@ create_deb() {
     mkdir -p "$debdir/usr/share/icons/hicolor/256x256/apps"
     
     # Copy application and libraries
-    cp "$INSTALL_DIR/Download Sorter" "$debdir/usr/lib/download-sorter/"
+        cp "$INSTALL_DIR/$BIN_NAME" "$debdir/usr/lib/download-sorter/DownloadSorter"
     # Copy updater if built
     if [ -f "$INSTALL_DIR/Updater" ]; then
         cp "$INSTALL_DIR/Updater" "$debdir/usr/lib/download-sorter/"
@@ -158,7 +162,7 @@ create_deb() {
     cat > "$debdir/usr/bin/download-sorter" << EOF
 #!/bin/bash
 export LD_LIBRARY_PATH="/usr/lib/download-sorter:\$LD_LIBRARY_PATH"
-exec "/usr/lib/download-sorter/Download Sorter" "\$@"
+    exec "/usr/lib/download-sorter/DownloadSorter" "\$@"
 EOF
     chmod +x "$debdir/usr/bin/download-sorter"
     
@@ -348,13 +352,16 @@ package() {
     # Install binary and libraries
     install -dm755 "$pkgdir/usr/lib/$pkgname"
     cp -r "$INSTALL_DIR"/* "$pkgdir/usr/lib/$pkgname/"
+        if [ -f "$pkgdir/usr/lib/$pkgname/$BIN_NAME" ]; then
+            mv "$pkgdir/usr/lib/$pkgname/$BIN_NAME" "$pkgdir/usr/lib/$pkgname/DownloadSorter"
+        fi
     
     # Create wrapper script
     install -dm755 "$pkgdir/usr/bin"
     cat > "$pkgdir/usr/bin/$pkgname" << 'EOFSCRIPT'
 #!/bin/bash
 export LD_LIBRARY_PATH="/usr/lib/download-sorter:$LD_LIBRARY_PATH"
-exec "/usr/lib/download-sorter/Download Sorter" "$@"
+    exec "/usr/lib/download-sorter/DownloadSorter" "$@"
 EOFSCRIPT
     chmod +x "$pkgdir/usr/bin/$pkgname"
     
