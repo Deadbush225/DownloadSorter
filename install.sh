@@ -104,30 +104,28 @@ if [ "$ACTION" = "uninstall" ]; then
 fi
 
 do_install() {
-    # Check if build exists
+    # Locate package/build directory relative to this script
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     INSTALL_DIR="$SCRIPT_DIR/install"
 
-    # Support running from repo root (with install/) or from the install bundle root
-    if [ -f "$SCRIPT_DIR/install/Download Sorter" ]; then
+    # Support repo root (with install/) or packaged release in current dir
+    if [ -f "$SCRIPT_DIR/install/DownloadSorter" ] || [ -f "$SCRIPT_DIR/install/Download\ Sorter" ]; then
         INSTALL_DIR="$SCRIPT_DIR/install"
-    elif [ -f "$SCRIPT_DIR/Download Sorter" ]; then
+    elif [ -f "$SCRIPT_DIR/DownloadSorter" ] || [ -f "$SCRIPT_DIR/Download\ Sorter" ]; then
         INSTALL_DIR="$SCRIPT_DIR"
     else
-        INSTALL_DIR="$SCRIPT_DIR/install"
+        INSTALL_DIR="$SCRIPT_DIR"
     fi
 
-    # Resolve built binary name
+    # Resolve binary name in package/build
     if [ -f "$INSTALL_DIR/DownloadSorter" ]; then
         BIN_SRC="DownloadSorter"
     elif [ -f "$INSTALL_DIR/Download Sorter" ]; then
         BIN_SRC="Download Sorter"
     else
-        log_error "Build not found. Please build the project first:"
-        echo "  cd $SCRIPT_DIR/src"
-        echo "  cmake -B build -DCMAKE_BUILD_TYPE=Release"
-        echo "  cmake --build build"
-        echo "  cmake --build build --target install_local"
+        log_error "Package not found."
+        echo "Run this script from the extracted package directory (containing 'DownloadSorter' and 'manifest.json'),"
+        echo "or build the project and run it from the repo root after 'install_local' to use ./install/."
         exit 1
     fi
 
@@ -186,9 +184,9 @@ StartupNotify=true
 EOF
 
     # Install icon if available
-    if [ -f "$SCRIPT_DIR/DownloadSorter.png" ]; then
+    if [ -f "$INSTALL_DIR/DownloadSorter.png" ]; then
         log_info "Installing application icon..."
-        cp "$SCRIPT_DIR/DownloadSorter.png" "$INSTALL_PREFIX/share/icons/hicolor/256x256/apps/download-sorter.png"
+        cp "$INSTALL_DIR/DownloadSorter.png" "$INSTALL_PREFIX/share/icons/hicolor/256x256/apps/download-sorter.png"
     # Fallback: original project icon path inside repo
     elif [ -f "$SCRIPT_DIR/src/icons/Download Sorter.png" ]; then
         log_info "Installing application icon (from src/icons)..."
