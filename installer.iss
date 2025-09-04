@@ -3,8 +3,33 @@
 
 #define MyAppName "Download Sorter"
 #ifndef MyAppVersion
-  #define MyAppVersion "0.0.0"
+  #ifexist "manifest.json"
+    #define _json LoadStringFromFile("manifest.json")
+    #define _key "\"version\""
+    #define _p Pos(_key, _json)
+    #if _p > 0
+      #define _after Copy(_json, _p + Length(_key), 2048)
+      #define _dq Chr(34)
+      #define _q1 Pos(_dq, _after)
+      #if _q1 > 0
+        #define _rest Copy(_after, _q1 + 1, 2048)
+        #define _q2 Pos(_dq, _rest)
+        #if _q2 > 0
+          #define MyAppVersion Copy(_rest, 1, _q2 - 1)
+        #else
+          #define MyAppVersion "0.0.0"
+        #endif
+      #else
+        #define MyAppVersion "0.0.0"
+      #endif
+    #else
+      #define MyAppVersion "0.0.0"
+    #endif
+  #else
+    #define MyAppVersion "0.0.0"
+  #endif
 #endif
+
 #define MyAppPublisher "My Company, Inc."
 #define MyAppURL "https://github.com/Deadbush225/DownloadSorter"
 #define MyAppExeName "Download Sorter.exe"

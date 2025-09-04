@@ -138,11 +138,22 @@ Dashboard::Dashboard() {
     }
 
     // Menu with "Configure Rules..." action
-    this->rulesMenu = this->menuBar()->addMenu("Rules");
+    this->rulesMenu = this->menuBar()->addMenu("&Rules");
     this->configureRulesAction =
         this->rulesMenu->addAction("Configure Rules...");
     QObject::connect(this->configureRulesAction, &QAction::triggered, this,
                      [this]() { this->openRulesConfigurator(); });
+
+    // Help menu and actions
+    this->helpMenu = this->menuBar()->addMenu("&Help");
+    this->checkUpdatesAction =
+        this->helpMenu->addAction("Check for &Updates...");
+    QObject::connect(this->checkUpdatesAction, &QAction::triggered, this,
+                     &Dashboard::checkForUpdates);
+    this->helpMenu->addSeparator();
+    this->aboutAction = this->helpMenu->addAction("&About Download Sorter");
+    QObject::connect(this->aboutAction, &QAction::triggered, this,
+                     &Dashboard::showAbout);
 
     // Status-bar progress bar (hidden by default)
     this->progressBar = new QProgressBar(this);

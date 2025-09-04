@@ -7,3 +7,4 @@ build*/
 *.exe
 compile_commands.json
 release_notes.md
+/scripts/run.sh

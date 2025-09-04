@@ -6,15 +6,15 @@ $currentVersion = $jsonContent.version
 # Define a dictionary of files and their version replacement patterns
 $versionUpdates = @{
     "./installer.iss"       = @(
-        @{ Pattern      = 'MyAppVersion ".*"';
-            Replacement = { "MyAppVersion `"$currentVersion`"" } 
+        @{ Pattern      = '#define\s+MyAppVersion\s+"[^"]+"';
+            Replacement = { "#define MyAppVersion `"$currentVersion`"" } 
         }
     )
-    "./Updater/updater.cpp" = @(
-        @{ Pattern      = 'appVersion = ".*"';
-            Replacement = { "appVersion = `"$currentVersion`"" } 
-        }
-    )
+    # "./Updater/updater.cpp" = @(
+    #     @{ Pattern      = 'appVersion = ".*"';
+    #         Replacement = { "appVersion = `"$currentVersion`"" } 
+    #     }
+    # )
 }
 
 # Iterate through each file and apply the replacements

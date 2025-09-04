@@ -1,8 +1,9 @@
 # Download Sorter
 
-- a small program to sort by types your assorted downloads
+A lightweight program to automatically organize your assorted downloads by file type.
+
 <p align="center" width="100%">
-  <img src="./docs/Download Sorter.png"/>
+    <img src="./docs/download-sorter.png" alt="Download Sorter Screenshot"/>
 </p>
 
 ## Compatibility
@@ -11,12 +12,17 @@
 
 ## Installation
 
-- Go to `Release` and download the setup file
-- Follow the installation Procedure
+See [INSTALL.md](./INSTALL.md) for detailed instructions.
 
-### How to use
+- Download the setup file from the `Release` section.
+- Follow the installation procedure.
 
-> Search for "Download Sorter" and run the program
+## Usage
 
-1. Click <kbd>browse</kbd> button and select your download folder.
-2. Click <kbd>Begin Sort</kbd>.
+1. Search for **Download Sorter** and launch the application.
+2. Click the <kbd>Browse</kbd> button to select your downloads folder.
+3. Click <kbd>Begin Sort</kbd> to organize your files by type.
+
+> You can also manually map each file type to their own folder
+
+![alt text](./docs/settings.png)

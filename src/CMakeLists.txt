@@ -42,9 +42,11 @@ message(STATUS "================================")
 if(WIN32)
     # Find windeployqt executable
     get_target_property(QT_QMAKE_EXECUTABLE Qt6::qmake IMPORTED_LOCATION)
+
     if(QT_QMAKE_EXECUTABLE)
         get_filename_component(QT_WINDEPLOYQT_EXECUTABLE ${QT_QMAKE_EXECUTABLE} PATH)
         set(QT_WINDEPLOYQT_EXECUTABLE "${QT_WINDEPLOYQT_EXECUTABLE}/windeployqt.exe")
+
         if(EXISTS ${QT_WINDEPLOYQT_EXECUTABLE})
             message(STATUS "Found windeployqt: ${QT_WINDEPLOYQT_EXECUTABLE}")
             set(QT_DEPLOY_TOOL_FOUND TRUE)
@@ -59,9 +61,11 @@ if(WIN32)
 elseif(APPLE)
     # Find macdeployqt for macOS deployment
     get_target_property(QT_QMAKE_EXECUTABLE Qt6::qmake IMPORTED_LOCATION)
+
     if(QT_QMAKE_EXECUTABLE)
         get_filename_component(QT_MACDEPLOYQT_EXECUTABLE ${QT_QMAKE_EXECUTABLE} PATH)
         set(QT_MACDEPLOYQT_EXECUTABLE "${QT_MACDEPLOYQT_EXECUTABLE}/macdeployqt")
+
         if(EXISTS ${QT_MACDEPLOYQT_EXECUTABLE})
             message(STATUS "Found macdeployqt: ${QT_MACDEPLOYQT_EXECUTABLE}")
             set(QT_DEPLOY_TOOL_FOUND TRUE)
@@ -108,8 +112,11 @@ add_executable(${PROJECT_NAME} ${SOURCE_FILES} ${app_icon_resource_windows} "./i
 # Include the Updater subproject
 add_subdirectory(${CMAKE_SOURCE_DIR}/../Updater ${CMAKE_BINARY_DIR}/Updater)
 
+# Ensure Updater builds before the main app (and is available for install)
+add_dependencies(${PROJECT_NAME} Updater)
+
 # include_directories("src/Utils" "Utils/")
-set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "Download Sorter")
+set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "DownloadSorter")
 
 # Set GUI subsystem for all Windows builds to eliminate console window
 if(WIN32)
@@ -121,6 +128,9 @@ target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_20)
 # libraries
 target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::Widgets)
 target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::Core)
+
+# Expose version to the application for fallback when manifest.json isn't available at runtime
+target_compile_definitions(${PROJECT_NAME} PRIVATE APP_VERSION="${PROJECT_VERSION}")
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━ Installation ━━━━━━━━━━━━━━━━━━━━━━━━━
 # Local install directory inside the project
@@ -182,7 +192,7 @@ endif()
 if(WIN32 OR APPLE)
     if(QT_DEPLOY_TOOL_FOUND)
         set(deploy_script "${CMAKE_CURRENT_BINARY_DIR}/deploy_${PROJECT_NAME}.cmake")
-        set(MAIN_BASENAME "Download Sorter")
+        set(MAIN_BASENAME "DownloadSorter")
         set(UPDATER_BASENAME "Updater")
         configure_file(
             "${CMAKE_CURRENT_SOURCE_DIR}/cmake/DeployRuntime.cmake.in"
@@ -218,6 +228,13 @@ endif()
 # Also install manifest.json so Updater and app can read it at runtime
 install(FILES "${CMAKE_SOURCE_DIR}/../manifest.json" DESTINATION .)
 
+install(PROGRAMS "${CMAKE_SOURCE_DIR}/../install.sh" DESTINATION .)
+
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/icons/Download Sorter.png"
+    DESTINATION .
+    RENAME "DownloadSorter.png"
+)
+
 # Prune optional/banned bits that may remain or from previous installs using a script file
 install(SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/cmake/PruneInstall.cmake")
 
@@ -240,7 +257,7 @@ add_custom_target(install_local
     COMMAND ${CMAKE_COMMAND} -E remove_directory "${INSTALL_DIR}"
     COMMAND ${CMAKE_COMMAND} -E make_directory "${INSTALL_DIR}"
     COMMAND ${CMAKE_COMMAND} --install "${CMAKE_BINARY_DIR}" --prefix "${INSTALL_DIR}" ${INSTALL_CONFIG_ARGS} ${INSTALL_STRIP_FLAG}
-    DEPENDS ${PROJECT_NAME}
+    DEPENDS ${PROJECT_NAME} Updater
     COMMENT "Installing to ${INSTALL_DIR} and deploying Qt runtime dependencies"
 )
 
@@ -251,7 +268,7 @@ if(UNIX)
 
     if(STRIP_EXECUTABLE)
         add_custom_command(TARGET install_local POST_BUILD
-            COMMAND find "${INSTALL_DIR}" -type f \( -name "Download Sorter" -o -name "*.so*" \) -print -exec ${STRIP_EXECUTABLE} --strip-unneeded {} \;
+            COMMAND find "${INSTALL_DIR}" -type f \( -name "DownloadSorter" -o -name "*.so*" \) -print -exec ${STRIP_EXECUTABLE} --strip-unneeded {} \;
             COMMENT "Stripping debug symbols from binaries and libraries"
             VERBATIM
         )
@@ -262,7 +279,7 @@ if(UNIX)
     if(UPX_EXECUTABLE)
         # Compress only the main binary; avoid shell redirections that can fail on CI
         add_custom_command(TARGET install_local POST_BUILD
-            COMMAND "${UPX_EXECUTABLE}" --best "${INSTALL_DIR}/Download Sorter"
+            COMMAND "${UPX_EXECUTABLE}" --best "${INSTALL_DIR}/DownloadSorter"
             COMMENT "Compressing binaries with UPX"
             VERBATIM
         )

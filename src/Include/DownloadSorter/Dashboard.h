@@ -25,6 +25,11 @@ class QMenu;
 
 // #include <boost/format.hpp>
 
+#include <QtCore/QCoreApplication>
+#include <QtCore/QFileInfo>
+#include <QtCore/QProcess>
+#include <QtWidgets/QMessageBox>
+
 class Dashboard : public QMainWindow {
    public:
     Dashboard();
@@ -47,12 +52,50 @@ class Dashboard : public QMainWindow {
     QAction* configureRulesAction = nullptr;
     QProgressBar* progressBar = nullptr;
 
+    // Help menu
+    QMenu* helpMenu = nullptr;
+    QAction* checkUpdatesAction = nullptr;
+    QAction* aboutAction = nullptr;
+
     // Helpers
     void onSortStarted();
     void openRulesConfigurator();
+    void checkForUpdates();
+    void showAbout();
 
    public slots:
     void browseDownloadFolder();
 };
 
 #endif
+
+// Inline implementations to ensure the Help -> Check for Updates starts
+// Updater.exe
+inline void Dashboard::checkForUpdates() {
+    QString updaterPath = QCoreApplication::applicationDirPath() + "/Updater";
+#ifdef Q_OS_WIN
+    updaterPath += ".exe";
+#endif
+    if (QFileInfo::exists(updaterPath)) {
+        if (!QProcess::startDetached(updaterPath, {})) {
+            QMessageBox::warning(this, "Update Check",
+                                 "Failed to start the Updater.");
+        }
+    } else {
+        QMessageBox::information(
+            this, "Updater Not Found",
+            "Updater was not found next to the application.\n"
+            "Please download the latest release from GitHub.");
+    }
+}
+
+inline void Dashboard::showAbout() {
+    const QString text = QStringLiteral(
+                             "Download Sorter\n"
+                             "Organize your downloads automatically\n\n"
+                             "Version: %1\n"
+                             "Built with Qt %2")
+                             .arg(QCoreApplication::applicationVersion(),
+                                  QString::fromLatin1(QT_VERSION_STR));
+    QMessageBox::about(this, "About Download Sorter", text);
+}

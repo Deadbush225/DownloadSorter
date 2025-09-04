@@ -254,6 +254,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
 
       - name: Read version
         id: ver
@@ -262,15 +265,39 @@ jobs:
       - name: Download all artifacts
         uses: actions/download-artifact@v4
 
+      - name: Compute previous tag
+        id: prev
+        shell: bash
+        run: |
+          git fetch --tags --force
+          current="${GITHUB_REF_NAME}"
+          prev=$(git tag --sort=-v:refname | grep -E '^v[0-9]+' | grep -v "^${current}$" | head -n1)
+          echo "prev_tag=${prev}" >> $GITHUB_OUTPUT
+
+      - name: Render release body
+        id: body
+        shell: bash
+        run: |
+          BODY_TEMPLATE="scripts/release_template.md"
+          BODY_OUT="scripts/release_body.md"
+          cp "$BODY_TEMPLATE" "$BODY_OUT"
+          echo "" >> "$BODY_OUT"
+          if [ -n "${{ steps.prev.outputs.prev_tag }}" ]; then
+            echo "Full Changelog: https://github.com/${{ github.repository }}/compare/${{ steps.prev.outputs.prev_tag }}...${{ github.ref_name }}" >> "$BODY_OUT"
+          else
+            echo "Full Changelog: https://github.com/${{ github.repository }}/commits/${{ github.ref_name }}" >> "$BODY_OUT"
+          fi
+
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           name: Download Sorter v${{ steps.ver.outputs.version }}
           tag_name: ${{ github.ref_name }}
+          body_path: scripts/release_body.md
           files: |
             linux-packages/*
             windows-installer/*
           draft: false
           prerelease: false
-          generate_release_notes: true
+          generate_release_notes: false
           token: ${{ secrets.GITHUB_TOKEN }}
