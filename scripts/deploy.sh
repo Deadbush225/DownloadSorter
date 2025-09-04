@@ -73,13 +73,13 @@ create_appimage() {
     # Copy libraries
     cp -r "$INSTALL_DIR"/*.so* "$appdir/usr/lib/" 2>/dev/null || true
     
-    # Create desktop file
+    # Create desktop file (no leading spaces per spec)
     cat > "$appdir/DownloadSorter.desktop" << EOF
 [Desktop Entry]
 Type=Application
 Name=Download Sorter
 Comment=Organize your downloads automatically
-    Exec=DownloadSorter
+Exec=DownloadSorter
 Icon=download-sorter
 Categories=Utility;FileManager;
 EOF
@@ -98,7 +98,7 @@ EOF
 #!/bin/bash
 HERE="$(dirname "$(readlink -f "${0}")")"
 export LD_LIBRARY_PATH="${HERE}/usr/lib:${LD_LIBRARY_PATH}"
-    exec "${HERE}/usr/bin/DownloadSorter" "$@"
+exec "${HERE}/usr/bin/DownloadSorter" "$@"
 EOF
     chmod +x "$appdir/AppRun"
     
@@ -133,7 +133,6 @@ EOF
         }
     fi
 
-        exec "/usr/lib/download-sorter/\$BIN_NAME" "\$@"
     tar czf "DownloadSorter-${VERSION}-x86_64.tar.gz" -C "$(dirname "$appdir")" "$(basename "$appdir")"
     log_success "Archive created: dist/DownloadSorter-${VERSION}-x86_64.tar.gz"
 }
@@ -162,7 +161,7 @@ create_deb() {
     cat > "$debdir/usr/bin/download-sorter" << EOF
 #!/bin/bash
 export LD_LIBRARY_PATH="/usr/lib/download-sorter:\$LD_LIBRARY_PATH"
-    exec "/usr/lib/download-sorter/DownloadSorter" "\$@"
+exec "/usr/lib/download-sorter/DownloadSorter" "\$@"
 EOF
     chmod +x "$debdir/usr/bin/download-sorter"
     
@@ -284,7 +283,7 @@ cp -r * %{buildroot}/usr/lib/%{name}/
 cat > %{buildroot}/usr/bin/%{name} << 'EOFSCRIPT'
 #!/bin/bash
 export LD_LIBRARY_PATH="/usr/lib/download-sorter:$LD_LIBRARY_PATH"
-exec "/usr/lib/download-sorter/Download Sorter" "$@"
+exec "/usr/lib/download-sorter/DownloadSorter" "$@"
 EOFSCRIPT
 chmod +x %{buildroot}/usr/bin/%{name}
 
@@ -361,7 +360,7 @@ package() {
     cat > "$pkgdir/usr/bin/$pkgname" << 'EOFSCRIPT'
 #!/bin/bash
 export LD_LIBRARY_PATH="/usr/lib/download-sorter:$LD_LIBRARY_PATH"
-    exec "/usr/lib/download-sorter/DownloadSorter" "$@"
+exec "/usr/lib/download-sorter/DownloadSorter" "$@"
 EOFSCRIPT
     chmod +x "$pkgdir/usr/bin/$pkgname"
     
