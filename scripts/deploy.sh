@@ -319,19 +319,8 @@ EOF
 
 # Create Arch Linux package (for Manjaro)
 create_arch() {
-    log_info "Creating Arch Linux package..."
-    
-    local archdir="$PROJECT_ROOT/dist/arch"
-    rm -rf "$archdir"
-    mkdir -p "$archdir"
-    
-    # Always create tar.gz instead of pkg.tar.gz for better compatibility
-    log_info "Creating tar.gz for Arch (better compatibility than pkg.tar.gz)"
-    cd "$PROJECT_ROOT/dist"
-    tar czf "download-sorter-${VERSION}-1-x86_64.tar.gz" -C "$INSTALL_DIR" .
-    log_success "Archive created: dist/download-sorter-${VERSION}-1-x86_64.tar.gz"
-    return
-
+    log_info "Arch Linux package creation skipped - using RPM tar.gz format for compatibility"
+    log_success "Arch package will use the RPM tar.gz format: download-sorter-${VERSION}-1.x86_64.tar.gz"
 }
 
 # Create all Linux packages
