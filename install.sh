@@ -84,6 +84,9 @@ do_uninstall() {
     rm -rf "$INSTALL_PREFIX/lib/download-sorter" || true
     rm -f "$INSTALL_PREFIX/share/applications/download-sorter.desktop" || true
     rm -f "$INSTALL_PREFIX/share/icons/hicolor/256x256/apps/download-sorter.png" || true
+    
+    # Also remove system-wide eUpdater if it was installed by this script
+    rm -f "$INSTALL_PREFIX/bin/eUpdater" || true
 
     if command -v update-desktop-database &> /dev/null; then
         log_info "Updating desktop database..."
@@ -150,8 +153,15 @@ do_install() {
     cp "$INSTALL_DIR/manifest.json" "$INSTALL_PREFIX/lib/download-sorter/"
 
     # Install updater if available
-    if [ -f "$INSTALL_DIR/Updater" ]; then
-        log_info "Installing Updater..."
+    if [ -f "$INSTALL_DIR/eUpdater" ]; then
+        log_info "Installing eUpdater..."
+        cp "$INSTALL_DIR/eUpdater" "$INSTALL_PREFIX/lib/download-sorter/"
+        # Also install eUpdater system-wide so other applications can use it
+        cp "$INSTALL_DIR/eUpdater" "$INSTALL_PREFIX/bin/"
+        chmod +x "$INSTALL_PREFIX/bin/eUpdater"
+        log_info "eUpdater installed system-wide and available for other applications"
+    elif [ -f "$INSTALL_DIR/Updater" ]; then
+        log_info "Installing Updater (legacy)..."
         cp "$INSTALL_DIR/Updater" "$INSTALL_PREFIX/lib/download-sorter/"
     fi
 
