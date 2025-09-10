@@ -109,11 +109,11 @@ endif()
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES} ${app_icon_resource_windows} "./icons/icons.qrc")
 
-# Include the Updater subproject
-add_subdirectory(${CMAKE_SOURCE_DIR}/../Updater ${CMAKE_BINARY_DIR}/Updater)
+# Include the eUpdater subproject
+add_subdirectory(${CMAKE_SOURCE_DIR}/../eUpdater ${CMAKE_BINARY_DIR}/eUpdater)
 
-# Ensure Updater builds before the main app (and is available for install)
-add_dependencies(${PROJECT_NAME} Updater)
+# Ensure eUpdater builds before the main app (and is available for install)
+add_dependencies(${PROJECT_NAME} eUpdater)
 
 # include_directories("src/Utils" "Utils/")
 set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "DownloadSorter")
@@ -193,7 +193,7 @@ if(WIN32 OR APPLE)
     if(QT_DEPLOY_TOOL_FOUND)
         set(deploy_script "${CMAKE_CURRENT_BINARY_DIR}/deploy_${PROJECT_NAME}.cmake")
         set(MAIN_BASENAME "DownloadSorter")
-        set(UPDATER_BASENAME "Updater")
+        set(UPDATER_BASENAME "eUpdater")
         configure_file(
             "${CMAKE_CURRENT_SOURCE_DIR}/cmake/DeployRuntime.cmake.in"
             "${deploy_script}"
@@ -225,7 +225,7 @@ if(WIN32 OR APPLE)
     endif()
 endif()
 
-# Also install manifest.json so Updater and app can read it at runtime
+# Also install manifest.json so eUpdater and app can read it at runtime
 install(FILES "${CMAKE_SOURCE_DIR}/../manifest.json" DESTINATION .)
 
 install(PROGRAMS "${CMAKE_SOURCE_DIR}/../install.sh" DESTINATION .)
@@ -257,7 +257,7 @@ add_custom_target(install_local
     COMMAND ${CMAKE_COMMAND} -E remove_directory "${INSTALL_DIR}"
     COMMAND ${CMAKE_COMMAND} -E make_directory "${INSTALL_DIR}"
     COMMAND ${CMAKE_COMMAND} --install "${CMAKE_BINARY_DIR}" --prefix "${INSTALL_DIR}" ${INSTALL_CONFIG_ARGS} ${INSTALL_STRIP_FLAG}
-    DEPENDS ${PROJECT_NAME} Updater
+    DEPENDS ${PROJECT_NAME} eUpdater
     COMMENT "Installing to ${INSTALL_DIR} and deploying Qt runtime dependencies"
 )
 

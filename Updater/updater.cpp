@@ -1,3 +1,5 @@
+#include <QtCore/QCommandLineOption>
+#include <QtCore/QCommandLineParser>
 #include <QtCore/QDir>
 #include <QtCore/QEventLoop>
 #include <QtCore/QFile>
@@ -6,6 +8,7 @@
 #include <QtCore/QJsonObject>
 #include <QtCore/QProcess>
 #include <QtCore/QStandardPaths>
+#include <QtCore/QVersionNumber>
 #include <QtGui/QColor>
 #include <QtGui/QIcon>
 #include <QtGui/QPalette>
@@ -19,29 +22,58 @@ class DownloadSorterUpdater : public QObject {
     Q_OBJECT
 
    private:
-    const QString appName = "Download Sorter";
-    const QString remoteManifestUrl =
-        "https://raw.githubusercontent.com/Deadbush225/DownloadSorter/main/"
-        "manifest.json";
-    // Use the GitHub API to get the latest release info
-    const QString latestReleaseApiUrl =
-        "https://api.github.com/repos/Deadbush225/DownloadSorter/releases/"
-        "latest";
-
     QNetworkAccessManager networkManager;
 
    public:
     DownloadSorterUpdater(QObject* parent = nullptr) : QObject(parent) {}
 
-    void checkForUpdates() {
-        // Download remote manifest
-        QString remoteManifestPath = downloadFile(remoteManifestUrl);
-        if (remoteManifestPath.isEmpty()) {
-            QMessageBox::critical(nullptr, "Update Error",
-                                  "Failed to download manifest file.");
+    void checkForUpdates(const QString& manifestUrl,
+                         const QString& releaseApiUrl,
+                         const QString& installerTemplate) {
+        if (manifestUrl.isEmpty() && releaseApiUrl.isEmpty()) {
+            QMessageBox::critical(nullptr, "Updater Error",
+                                  "No update source provided. Pass "
+                                  "--manifest-url or --release-api-url.");
             return;
         }
 
+        QString remoteVersion;
+
+        // Prefer manifest URL if provided
+        if (!manifestUrl.isEmpty()) {
+            QString remoteManifestPath = downloadFile(manifestUrl);
+            if (remoteManifestPath.isEmpty()) {
+                QMessageBox::critical(nullptr, "Update Error",
+                                      "Failed to download manifest file.");
+                return;
+            }
+            QFile remoteManifestFile(remoteManifestPath);
+            QString remoteManifest;
+            if (remoteManifestFile.open(QIODevice::ReadOnly |
+                                        QIODevice::Text)) {
+                remoteManifest = remoteManifestFile.readAll();
+                remoteManifestFile.close();
+            }
+            remoteVersion = getJsonValue(remoteManifest, "version");
+        } else {
+            // Use GitHub API for latest release
+            QString apiResponsePath = downloadFile(releaseApiUrl);
+            if (apiResponsePath.isEmpty()) {
+                QMessageBox::critical(nullptr, "Update Error",
+                                      "Failed to query release API.");
+                return;
+            }
+            QFile apiFile(apiResponsePath);
+            QString apiResponse;
+            if (apiFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+                apiResponse = apiFile.readAll();
+                apiFile.close();
+            }
+            remoteVersion = getJsonValue(apiResponse, "tag_name");
+            if (remoteVersion.startsWith('v')) {
+                remoteVersion.remove(0, 1);
+            }
+        }
         // Read local manifest
         QString localManifestPath =
             QCoreApplication::applicationDirPath() + "/manifest.json";
@@ -59,17 +91,8 @@ class DownloadSorterUpdater : public QObject {
             localManifest = "{\"version\": \"0.0.0\"}";
         }
 
-        // Read remote manifest
-        QFile remoteManifestFile(remoteManifestPath);
-        QString remoteManifest;
-        if (remoteManifestFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
-            remoteManifest = remoteManifestFile.readAll();
-            remoteManifestFile.close();
-        }
-
-        // Extract versions
+        // Extract local version
         QString localVersion = getJsonValue(localManifest, "version");
-        QString remoteVersion = getJsonValue(remoteManifest, "version");
 
         // Compare versions
         if (compareVersions(localVersion, remoteVersion) < 0) {
@@ -77,12 +100,15 @@ class DownloadSorterUpdater : public QObject {
                 nullptr, "Update Available",
                 "A new version is available: " + remoteVersion);
 
-            // Build installer URL based on manifest version
-            QString installerUrl =
-                QString(
+            // Build installer URL from template
+            QString tpl = installerTemplate;
+            if (tpl.isEmpty()) {
+                // Default template for Windows executable
+                tpl =
                     "https://github.com/Deadbush225/DownloadSorter/releases/"
-                    "download/%1/download-sorter-%1.exe")
-                    .arg(remoteVersion);
+                    "download/%1/download-sorter-%1.exe";
+            }
+            QString installerUrl = tpl.arg(remoteVersion);
 
             // Download installer
             QString installerPath = downloadFile(installerUrl);
@@ -144,7 +170,9 @@ class DownloadSorterUpdater : public QObject {
 
     int compareVersions(const QString& localVersion,
                         const QString& remoteVersion) {
-        return localVersion.compare(remoteVersion);
+        const QVersionNumber lv = QVersionNumber::fromString(localVersion);
+        const QVersionNumber rv = QVersionNumber::fromString(remoteVersion);
+        return QVersionNumber::compare(lv, rv);
     }
 
     QString getJsonValue(const QString& json, const QString& key) {
@@ -217,8 +245,31 @@ int main(int argc, char* argv[]) {
     setDarkTheme();
     app.setWindowIcon(QIcon(":/appicon"));
 
+    QCommandLineParser parser;
+    parser.setApplicationDescription("Qt-based Generic Updater");
+    parser.addHelpOption();
+    parser.addVersionOption();
+
+    const QCommandLineOption manifestOpt({"m", "manifest-url"},
+                                         "Remote manifest JSON URL.", "url");
+    const QCommandLineOption apiOpt({"a", "release-api-url"},
+                                    "GitHub releases API URL.", "url");
+    const QCommandLineOption tplOpt({"t", "installer-template"},
+                                    "Installer URL template with %1 = version.",
+                                    "template");
+
+    parser.addOption(manifestOpt);
+    parser.addOption(apiOpt);
+    parser.addOption(tplOpt);
+
+    parser.process(app);
+
+    const QString manifestUrl = parser.value(manifestOpt);
+    const QString apiUrl = parser.value(apiOpt);
+    const QString installerTpl = parser.value(tplOpt);
+
     DownloadSorterUpdater updater;
-    updater.checkForUpdates();
+    updater.checkForUpdates(manifestUrl, apiUrl, installerTpl);
 
     return 0;
 }

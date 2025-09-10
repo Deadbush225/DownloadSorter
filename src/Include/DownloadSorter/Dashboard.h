@@ -70,14 +70,28 @@ class Dashboard : public QMainWindow {
 #endif
 
 // Inline implementations to ensure the Help -> Check for Updates starts
-// Updater.exe
+// eUpdater.exe
 inline void Dashboard::checkForUpdates() {
-    QString updaterPath = QCoreApplication::applicationDirPath() + "/Updater";
+    QString updaterPath = QCoreApplication::applicationDirPath() + "/eUpdater";
 #ifdef Q_OS_WIN
     updaterPath += ".exe";
 #endif
     if (QFileInfo::exists(updaterPath)) {
-        if (!QProcess::startDetached(updaterPath, {})) {
+        // Pass update source URLs via CLI to avoid hardcoding in updater
+        const QString manifestUrl = QStringLiteral(
+            "https://raw.githubusercontent.com/Deadbush225/DownloadSorter/main/"
+            "manifest.json");
+        const QString installerTpl = QStringLiteral(
+            "https://github.com/Deadbush225/DownloadSorter/releases/download/"
+            "%1/download-sorter-%1.exe");
+
+        QStringList args;
+        args << QStringLiteral("--manifest-url") << manifestUrl
+             << QStringLiteral("--installer-template") << installerTpl
+             << QStringLiteral("--package-name")
+             << QStringLiteral("download-sorter");
+
+        if (!QProcess::startDetached(updaterPath, args)) {
             QMessageBox::warning(this, "Update Check",
                                  "Failed to start the Updater.");
         }
