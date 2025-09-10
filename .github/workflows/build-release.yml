@@ -52,8 +52,8 @@ jobs:
           path: |
             dist/*.AppImage
             dist/*.deb
-            dist/*.rpm
             dist/*.tar.gz
+          if-no-files-found: warn
 
   build-windows:
     runs-on: windows-latest

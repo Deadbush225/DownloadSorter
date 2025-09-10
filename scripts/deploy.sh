@@ -325,72 +325,13 @@ create_arch() {
     rm -rf "$archdir"
     mkdir -p "$archdir"
     
-    if ! command -v makepkg &> /dev/null; then
-        log_warning "makepkg not found, creating tar.gz instead"
-        cd "$PROJECT_ROOT/dist"
-        tar czf "download-sorter-${VERSION}-1-x86_64.pkg.tar.gz" -C "$INSTALL_DIR" .
-        log_success "Archive created: dist/download-sorter-${VERSION}-1-x86_64.pkg.tar.gz"
-        return
-    fi
-    
-    # Create PKGBUILD
-    cat > "$archdir/PKGBUILD" << EOF
-# Maintainer: Deadbush225 <your-email@example.com>
-pkgname=download-sorter
-pkgver=$VERSION
-pkgrel=1
-pkgdesc="Organize your downloads automatically"
-arch=('x86_64')
-url="https://github.com/Deadbush225/DownloadSorter"
-license=('MIT')
-depends=('qt6-base')
-source=()
-md5sums=()
+    # Always create tar.gz instead of pkg.tar.gz for better compatibility
+    log_info "Creating tar.gz for Arch (better compatibility than pkg.tar.gz)"
+    cd "$PROJECT_ROOT/dist"
+    tar czf "download-sorter-${VERSION}-1-x86_64.tar.gz" -C "$INSTALL_DIR" .
+    log_success "Archive created: dist/download-sorter-${VERSION}-1-x86_64.tar.gz"
+    return
 
-package() {
-    # Install binary and libraries
-    install -dm755 "$pkgdir/usr/lib/$pkgname"
-    cp -r "$INSTALL_DIR"/* "$pkgdir/usr/lib/$pkgname/"
-        if [ -f "$pkgdir/usr/lib/$pkgname/$BIN_NAME" ]; then
-            mv "$pkgdir/usr/lib/$pkgname/$BIN_NAME" "$pkgdir/usr/lib/$pkgname/DownloadSorter"
-        fi
-    
-    # Create wrapper script
-    install -dm755 "$pkgdir/usr/bin"
-    cat > "$pkgdir/usr/bin/$pkgname" << 'EOFSCRIPT'
-#!/bin/bash
-export LD_LIBRARY_PATH="/usr/lib/download-sorter:$LD_LIBRARY_PATH"
-exec "/usr/lib/download-sorter/DownloadSorter" "$@"
-EOFSCRIPT
-    chmod +x "$pkgdir/usr/bin/$pkgname"
-    
-    # Desktop file
-    install -dm755 "$pkgdir/usr/share/applications"
-    cat > "$pkgdir/usr/share/applications/$pkgname.desktop" << 'EOFDESKTOP'
-[Desktop Entry]
-Name=Download Sorter
-Comment=Organize your downloads automatically
-Exec=download-sorter
-Icon=download-sorter
-Type=Application
-Categories=Utility;FileManager;
-EOFDESKTOP
-}
-EOF
-    
-    cd "$archdir"
-    makepkg -f || {
-        log_warning "makepkg failed, creating tar.gz"
-        cd "$PROJECT_ROOT/dist"
-        tar czf "download-sorter-${VERSION}-1-x86_64.pkg.tar.gz" -C "$INSTALL_DIR" .
-        log_success "Archive created: dist/download-sorter-${VERSION}-1-x86_64.pkg.tar.gz"
-        return
-    }
-    
-    # Copy result
-    cp *.pkg.tar.* "$PROJECT_ROOT/dist/" 2>/dev/null || true
-    
-    log_success "Arch package created in dist/"
 }
 
 # Create all Linux packages
