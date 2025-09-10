@@ -109,11 +109,20 @@ endif()
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES} ${app_icon_resource_windows} "./icons/icons.qrc")
 
-# Include the eUpdater subproject
-add_subdirectory(${CMAKE_SOURCE_DIR}/../eUpdater ${CMAKE_BINARY_DIR}/eUpdater)
+# Include the eUpdater subproject or find it as system package
+find_package(eUpdater QUIET)
 
-# Ensure eUpdater builds before the main app (and is available for install)
-add_dependencies(${PROJECT_NAME} eUpdater)
+if(eUpdater_FOUND)
+    message(STATUS "Using system-installed eUpdater")
+
+# No build dependency needed - eUpdater is already installed
+else()
+    message(STATUS "Using eUpdater as subproject")
+    add_subdirectory(${CMAKE_SOURCE_DIR}/../eUpdater ${CMAKE_BINARY_DIR}/eUpdater)
+
+    # Ensure eUpdater builds before the main app (and is available for install)
+    add_dependencies(${PROJECT_NAME} eUpdater)
+endif()
 
 # include_directories("src/Utils" "Utils/")
 set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "DownloadSorter")
@@ -215,6 +224,18 @@ set(executable_path "${executable_path}")
 # Install the app (goes to ${INSTALL_DIR}) and deploy Qt runtime deps
 install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION .)
 
+# Install eUpdater - either from subproject or system installation
+if(eUpdater_FOUND)
+    # Copy system-installed eUpdater to local install directory
+    get_target_property(EUPDATER_LOCATION eUpdater::eUpdater LOCATION)
+
+    if(EUPDATER_LOCATION)
+        install(PROGRAMS ${EUPDATER_LOCATION} DESTINATION .)
+    else()
+        message(WARNING "Could not find eUpdater executable to install")
+    endif()
+endif()
+
 if(WIN32 OR APPLE)
     if(QT_DEPLOY_TOOL_FOUND)
         # Pass CMAKE_INSTALL_PREFIX at install time
@@ -257,7 +278,7 @@ add_custom_target(install_local
     COMMAND ${CMAKE_COMMAND} -E remove_directory "${INSTALL_DIR}"
     COMMAND ${CMAKE_COMMAND} -E make_directory "${INSTALL_DIR}"
     COMMAND ${CMAKE_COMMAND} --install "${CMAKE_BINARY_DIR}" --prefix "${INSTALL_DIR}" ${INSTALL_CONFIG_ARGS} ${INSTALL_STRIP_FLAG}
-    DEPENDS ${PROJECT_NAME} eUpdater
+    DEPENDS ${PROJECT_NAME} $<$<NOT:$<BOOL:${eUpdater_FOUND}>>:eUpdater>
     COMMENT "Installing to ${INSTALL_DIR} and deploying Qt runtime dependencies"
 )
 
