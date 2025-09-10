@@ -4,6 +4,7 @@ install/
 build.ps1
 run-build.ps1
 build*/
+dist/
 *.exe
 compile_commands.json
 release_notes.md

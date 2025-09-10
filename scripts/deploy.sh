@@ -56,6 +56,8 @@ check_build() {
 
 # Create AppImage (Universal Linux)
 create_appimage() {
+    mkdir -p "$PROJECT_ROOT/dist"
+
     log_info "Creating AppImage..."
     
     local appdir="$PROJECT_ROOT/dist/DownloadSorter.AppDir"
@@ -139,6 +141,8 @@ EOF
 
 # Create DEB package (Ubuntu/Debian)
 create_deb() {
+    mkdir -p "$PROJECT_ROOT/dist"
+
     log_info "Creating DEB package..."
     
     local debdir="$PROJECT_ROOT/dist/deb"
@@ -209,6 +213,8 @@ EOF
 
 # Create RPM package (Fedora/RHEL)
 create_rpm() {
+    mkdir -p "$PROJECT_ROOT/dist"
+
     log_info "Creating RPM package..."
 
     # Force tarball on non-RPM distros or when requested
@@ -325,9 +331,7 @@ create_arch() {
 
 # Create all Linux packages
 create_linux() {
-    log_info "Creating all Linux packages..."
-    mkdir -p "$PROJECT_ROOT/dist"
-    
+    log_info "Creating all Linux packages..."    
     create_appimage
     create_deb
     create_rpm
