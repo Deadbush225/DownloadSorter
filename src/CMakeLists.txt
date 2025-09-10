@@ -226,11 +226,12 @@ install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION .)
 
 # Install eUpdater - either from subproject or system installation
 if(eUpdater_FOUND)
-    # Copy system-installed eUpdater to local install directory
-    get_target_property(EUPDATER_LOCATION eUpdater::eUpdater LOCATION)
+    # Copy system-installed eUpdater to local install directory (root, not bin/)
+    find_program(EUPDATER_EXECUTABLE eUpdater)
 
-    if(EUPDATER_LOCATION)
-        install(PROGRAMS ${EUPDATER_LOCATION} DESTINATION .)
+    if(EUPDATER_EXECUTABLE)
+        install(PROGRAMS ${EUPDATER_EXECUTABLE} DESTINATION .)
+        message(STATUS "Will install system eUpdater from: ${EUPDATER_EXECUTABLE}")
     else()
         message(WARNING "Could not find eUpdater executable to install")
     endif()
