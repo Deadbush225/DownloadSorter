@@ -90,7 +90,7 @@ jobs:
         run: |
           git clone https://github.com/Deadbush225/eUpdater.git C:\eUpdater
           cd C:\eUpdater
-          if exist build (rmdir /s /q build)
+          if (Test-Path "build") { Remove-Item -Recurse -Force "build" }
           mkdir build
           cd build
           cmake .. -G "Visual Studio 17 2022" -A x64
