@@ -30,11 +30,18 @@ jobs:
         run: |
           sudo apt install -y upx-ucl
 
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake ninja-build qt6-base-dev qt6-base-dev-tools libqt6widgets6 libqt6network6 rpm dpkg-dev
+
       - name: Install eUpdater
         run: |
           git clone https://github.com/Deadbush225/eUpdater.git /tmp/eUpdater
           cd /tmp/eUpdater
-          mkdir build && cd build
+          rm -rf build  # Clean any existing build directory
+          mkdir build
+          cd build
           cmake ..
           make -j$(nproc)
           sudo cmake --install .
@@ -45,11 +52,6 @@ jobs:
           cmake -B build -DCMAKE_BUILD_TYPE=Release
           cmake --build build
           cmake --build build --target install_local
-
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential cmake ninja-build qt6-base-dev qt6-base-dev-tools libqt6widgets6 libqt6network6 rpm dpkg-dev
 
       - name: Create packages
         run: |
