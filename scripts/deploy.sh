@@ -40,10 +40,12 @@ log_error() {
 
 # Check if build exists
 check_build() {
-    if [ -f "$INSTALL_DIR/DownloadSorter" ]; then
+    if [ -f "$INSTALL_DIR/bin/DownloadSorter" ]; then
         BIN_NAME="DownloadSorter"
-    elif [ -f "$INSTALL_DIR/Download Sorter" ]; then
+        MAIN_EXECUTABLE="$INSTALL_DIR/bin/DownloadSorter"
+    elif [ -f "$INSTALL_DIR/bin/Download Sorter" ]; then
         BIN_NAME="Download Sorter"
+        MAIN_EXECUTABLE="$INSTALL_DIR/bin/Download Sorter"
     else
         log_error "Build not found. Please build the project first:"
         echo "  cd $PROJECT_ROOT/src"
@@ -66,14 +68,14 @@ create_appimage() {
     mkdir -p "$appdir/usr/lib"
     
     # Copy application
-        cp "$INSTALL_DIR/$BIN_NAME" "$appdir/usr/bin/DownloadSorter"
+    cp "$MAIN_EXECUTABLE" "$appdir/usr/bin/DownloadSorter"
     # Copy updater if built
-    if [ -f "$INSTALL_DIR/Updater" ]; then
-        cp "$INSTALL_DIR/Updater" "$appdir/usr/bin/"
+    if [ -f "$INSTALL_DIR/bin/eUpdater" ]; then
+        cp "$INSTALL_DIR/bin/eUpdater" "$appdir/usr/bin/"
     fi
     
     # Copy libraries
-    cp -r "$INSTALL_DIR"/*.so* "$appdir/usr/lib/" 2>/dev/null || true
+    cp -r "$INSTALL_DIR/lib"/*.so* "$appdir/usr/lib/" 2>/dev/null || true
     
     # Create desktop file (no leading spaces per spec)
     cat > "$appdir/DownloadSorter.desktop" << EOF
@@ -87,7 +89,9 @@ Categories=Utility;FileManager;
 EOF
     
     # Copy icon (you'll need to have this)
-    if [ -f "$PROJECT_ROOT/src/icons/Download Sorter.png" ]; then
+    if [ -f "$INSTALL_DIR/icons/DownloadSorter.png" ]; then
+        cp "$INSTALL_DIR/icons/DownloadSorter.png" "$appdir/download-sorter.png"
+    elif [ -f "$PROJECT_ROOT/src/icons/Download Sorter.png" ]; then
         cp "$PROJECT_ROOT/src/icons/Download Sorter.png" "$appdir/download-sorter.png"
     else
         log_warning "Icon not found, AppImage will have default icon"
@@ -154,12 +158,12 @@ create_deb() {
     mkdir -p "$debdir/usr/share/icons/hicolor/256x256/apps"
     
     # Copy application and libraries
-        cp "$INSTALL_DIR/$BIN_NAME" "$debdir/usr/lib/download-sorter/DownloadSorter"
+    cp "$MAIN_EXECUTABLE" "$debdir/usr/lib/download-sorter/DownloadSorter"
     # Copy updater if built
-    if [ -f "$INSTALL_DIR/Updater" ]; then
-        cp "$INSTALL_DIR/Updater" "$debdir/usr/lib/download-sorter/"
+    if [ -f "$INSTALL_DIR/bin/eUpdater" ]; then
+        cp "$INSTALL_DIR/bin/eUpdater" "$debdir/usr/lib/download-sorter/"
     fi
-    cp -r "$INSTALL_DIR"/*.so* "$debdir/usr/lib/download-sorter/" 2>/dev/null || true
+    cp -r "$INSTALL_DIR/lib"/*.so* "$debdir/usr/lib/download-sorter/" 2>/dev/null || true
     
     # Create wrapper script
     cat > "$debdir/usr/bin/download-sorter" << EOF
@@ -181,7 +185,9 @@ Categories=Utility;FileManager;
 EOF
     
     # Copy icon if available
-    if [ -f "$PROJECT_ROOT/src/icons/Download Sorter.png" ]; then
+    if [ -f "$INSTALL_DIR/icons/DownloadSorter.png" ]; then
+        cp "$INSTALL_DIR/icons/DownloadSorter.png" "$debdir/usr/share/icons/hicolor/256x256/apps/download-sorter.png"
+    elif [ -f "$PROJECT_ROOT/src/icons/Download Sorter.png" ]; then
         cp "$PROJECT_ROOT/src/icons/Download Sorter.png" "$debdir/usr/share/icons/hicolor/256x256/apps/download-sorter.png"
     fi
     
@@ -221,7 +227,7 @@ create_rpm() {
     if [ "${FORCE_RPM_TARBALL:-}" = "1" ]; then
         log_warning "FORCE_RPM_TARBALL=1 set; creating tar.gz instead of RPM"
         cd "$PROJECT_ROOT/dist"
-        tar czf "download-sorter-${VERSION}-1.x86_64.tar.gz" -C "$INSTALL_DIR" .
+        tar czf "download-sorter-${VERSION}-1.x86_64.tar.gz" -C "$INSTALL_DIR" bin lib icons *.sh *.json 2>/dev/null || tar czf "download-sorter-${VERSION}-1.x86_64.tar.gz" -C "$INSTALL_DIR" .
         log_success "Archive created: dist/download-sorter-${VERSION}-1.x86_64.tar.gz"
         return
     fi
@@ -230,7 +236,7 @@ create_rpm() {
     if ! command -v rpmbuild &> /dev/null; then
         log_warning "rpmbuild not found, creating tar.gz instead"
         cd "$PROJECT_ROOT/dist"
-        tar czf "download-sorter-${VERSION}-1.x86_64.tar.gz" -C "$INSTALL_DIR" .
+        tar czf "download-sorter-${VERSION}-1.x86_64.tar.gz" -C "$INSTALL_DIR" bin lib icons *.sh *.json 2>/dev/null || tar czf "download-sorter-${VERSION}-1.x86_64.tar.gz" -C "$INSTALL_DIR" .
         log_success "Archive created: dist/download-sorter-${VERSION}-1.x86_64.tar.gz"
         return
     fi
@@ -242,7 +248,7 @@ create_rpm() {
             *)
                 log_warning "Non-RPM-based distro detected (${ID:-unknown}); creating tar.gz instead"
                 cd "$PROJECT_ROOT/dist"
-                tar czf "download-sorter-${VERSION}-1.x86_64.tar.gz" -C "$INSTALL_DIR" .
+                tar czf "download-sorter-${VERSION}-1.x86_64.tar.gz" -C "$INSTALL_DIR" bin lib icons *.sh *.json 2>/dev/null || tar czf "download-sorter-${VERSION}-1.x86_64.tar.gz" -C "$INSTALL_DIR" .
                 log_success "Archive created: dist/download-sorter-${VERSION}-1.x86_64.tar.gz"
                 return
                 ;;
@@ -307,13 +313,13 @@ EOF
     
     # Create source tarball
     cd "$INSTALL_DIR"
-    tar czf "$rpmdir/SOURCES/download-sorter-${VERSION}.tar.gz" *
+    tar czf "$rpmdir/SOURCES/download-sorter-${VERSION}.tar.gz" bin lib icons *.sh *.json 2>/dev/null || tar czf "$rpmdir/SOURCES/download-sorter-${VERSION}.tar.gz" *
     
     # Build RPM
     if ! rpmbuild --define "_topdir $rpmdir" -bb "$rpmdir/SPECS/download-sorter.spec"; then
         log_warning "RPM build failed, creating tar.gz"
         cd "$PROJECT_ROOT/dist"
-        tar czf "download-sorter-${VERSION}-1.x86_64.tar.gz" -C "$INSTALL_DIR" .
+        tar czf "download-sorter-${VERSION}-1.x86_64.tar.gz" -C "$INSTALL_DIR" bin lib icons *.sh *.json 2>/dev/null || tar czf "download-sorter-${VERSION}-1.x86_64.tar.gz" -C "$INSTALL_DIR" .
         log_success "Archive created: dist/download-sorter-${VERSION}-1.x86_64.tar.gz"
         return
     fi

@@ -148,6 +148,11 @@ set(INSTALL_DIR "${CMAKE_SOURCE_DIR}/../install")
 # Keep default install() using this prefix (overridden by --prefix below if needed)
 set(CMAKE_INSTALL_PREFIX "${INSTALL_DIR}" CACHE PATH "Install prefix" FORCE)
 
+# Set standardized install directories
+set(CMAKE_INSTALL_BINDIR "bin")
+set(CMAKE_INSTALL_LIBDIR "lib")
+set(CMAKE_INSTALL_ICONDIR "icons")
+
 # Choose platform plugins to deploy per OS
 if(WIN32)
     set(QT_DEPLOY_PLUGINS_LIST "platforms;qwindows;iconengines;qsvgicon;imageformats;qico")
@@ -221,16 +226,16 @@ set(QT_DEPLOY_EXCLUDE_LIBS_LIST "${QT_DEPLOY_EXCLUDE_LIBS_LIST}")
 set(QT_DEPLOY_PLUGINS_LIST "${QT_DEPLOY_PLUGINS_LIST}")
 set(executable_path "${executable_path}")
 
-# Install the app (goes to ${INSTALL_DIR}) and deploy Qt runtime deps
-install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION .)
+# Install the app (goes to ${INSTALL_DIR}/bin) and deploy Qt runtime deps
+install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 # Install eUpdater - either from subproject or system installation
 if(eUpdater_FOUND)
-    # Copy system-installed eUpdater to local install directory (root, not bin/)
+    # Copy system-installed eUpdater to local install directory (bin/)
     find_program(EUPDATER_EXECUTABLE eUpdater)
 
     if(EUPDATER_EXECUTABLE)
-        install(PROGRAMS ${EUPDATER_EXECUTABLE} DESTINATION .)
+        install(PROGRAMS ${EUPDATER_EXECUTABLE} DESTINATION ${CMAKE_INSTALL_BINDIR})
         message(STATUS "Will install system eUpdater from: ${EUPDATER_EXECUTABLE}")
     else()
         message(WARNING "Could not find eUpdater executable to install")
@@ -253,7 +258,7 @@ install(FILES "${CMAKE_SOURCE_DIR}/../manifest.json" DESTINATION .)
 install(PROGRAMS "${CMAKE_SOURCE_DIR}/../install.sh" DESTINATION .)
 
 install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/icons/Download Sorter.png"
-    DESTINATION .
+    DESTINATION ${CMAKE_INSTALL_ICONDIR}
     RENAME "DownloadSorter.png"
 )
 
@@ -290,7 +295,7 @@ if(UNIX)
 
     if(STRIP_EXECUTABLE)
         add_custom_command(TARGET install_local POST_BUILD
-            COMMAND find "${INSTALL_DIR}" -type f \( -name "DownloadSorter" -o -name "*.so*" \) -print -exec ${STRIP_EXECUTABLE} --strip-unneeded {} \;
+            COMMAND find "${INSTALL_DIR}" -type f \( -name "DownloadSorter" -o -name "eUpdater" -o -name "*.so*" \) -print -exec ${STRIP_EXECUTABLE} --strip-unneeded {} \;
             COMMENT "Stripping debug symbols from binaries and libraries"
             VERBATIM
         )
@@ -301,7 +306,7 @@ if(UNIX)
     if(UPX_EXECUTABLE)
         # Compress only the main binary; avoid shell redirections that can fail on CI
         add_custom_command(TARGET install_local POST_BUILD
-            COMMAND "${UPX_EXECUTABLE}" --best "${INSTALL_DIR}/DownloadSorter"
+            COMMAND "${UPX_EXECUTABLE}" --best "${INSTALL_DIR}/${CMAKE_INSTALL_BINDIR}/DownloadSorter"
             COMMENT "Compressing binaries with UPX"
             VERBATIM
         )

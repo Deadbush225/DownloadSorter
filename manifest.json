@@ -1,1 +1,18 @@
-{ "version": "1.0.1" }
+{
+	"name": "DownloadSorter",
+	"version": "1.0.1",
+	"description": "Automatically sort and organize your downloads",
+	"desktop": {
+		"desktop_name": "Download Sorter",
+		"generic_name": "File Organizer",
+		"comment": "Sort and organize downloads automatically",
+		"categories": "Utility;FileTools;System;",
+		"keywords": "download;sort;organize;file;manager",
+		"mime_types": "",
+		"executable": "DownloadSorter",
+		"icon_path": "icons/DownloadSorter.png",
+		"package_id": "com.yourcompany.downloadsorter",
+		"supports_files": false,
+		"cli_helper": false
+	}
+}
