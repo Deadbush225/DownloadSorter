@@ -2,6 +2,9 @@
 	"name": "DownloadSorter",
 	"version": "1.0.1",
 	"description": "Automatically sort and organize your downloads",
+	"homepage": "https://github.com/Deadbush225/download-sorter",
+	"license": "MIT",
+	"maintainer": "Deadbush225 <your-email@example.com>",
 	"desktop": {
 		"desktop_name": "Download Sorter",
 		"generic_name": "File Organizer",
@@ -14,5 +17,12 @@
 		"package_id": "com.yourcompany.downloadsorter",
 		"supports_files": false,
 		"cli_helper": false
+	},
+	"deployment": {
+		"dependencies": {
+			"deb": "libc6, libqt6core6, libqt6gui6, libqt6widgets6",
+			"rpm": "qt6-qtbase qt6-qtbase-gui"
+		},
+		"extra_files": {}
 	}
 }

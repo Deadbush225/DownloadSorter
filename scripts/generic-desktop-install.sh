@@ -1,6 +1,6 @@
 #!/bin/bash
 # Generic Linux Desktop Integration Framework
-# Version: 1.0
+# Version: 1.1
 # 
 # This script provides desktop integration for any Linux application
 # that follows the expected project structure.
@@ -8,13 +8,20 @@
 # Required project structure:
 # project-root/
 # ├── manifest.json (with name, version, description + desktop config)
-# ├── install/
-# │   ├── MainExecutable (or specified in config)
-# │   ├── *.so* (shared libraries)
-# │   └── other-files...
-# ├── Icons/
+# ├── bin/
+# │   └── MainExecutable (or specified in config)
+# ├── lib/
+# │   └── *.so* (shared libraries)
+# ├── icons/
 # │   └── AppIcon.png (or specified in config)
-# └── install.sh (this script)
+# ├── install.sh (this script)
+# └── scripts/
+#     └── post-install.sh (optional customization script)
+#
+# Optional post-install.sh script:
+# If present, this script will be called after the main installation
+# with arguments: INSTALL_PREFIX PACKAGE_ID APP_NAME
+# Use this for app-specific customization like CLI helpers, config setup, etc.
 
 set -e
 
@@ -41,7 +48,7 @@ confirm() {
 
 # Configuration loader
 load_config() {
-    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     
     # Load manifest.json for all configuration
     if [ -f "$SCRIPT_DIR/manifest.json" ]; then
@@ -114,50 +121,50 @@ load_config() {
         INSTALL_USER="user-specific"
     fi
     
-    # Locate install directory
-    INSTALL_DIR="$SCRIPT_DIR/install"
-    if [ -f "$INSTALL_DIR/$EXECUTABLE_NAME" ]; then
+    # Locate install directories
+    INSTALL_BIN="$SCRIPT_DIR/bin"
+    INSTALL_LIB="$SCRIPT_DIR/lib"
+    INSTALL_ICONS="$SCRIPT_DIR/icons"
+    # Find main executable in bin
+    if [ -f "$INSTALL_BIN/$EXECUTABLE_NAME" ]; then
         BIN_SRC="$EXECUTABLE_NAME"
     else
-        # Auto-detect executable
         candidates="main app"
         if [ -n "$APP_NAME" ]; then
             candidates="$APP_NAME $(echo "$APP_NAME" | tr ' ' '') $(echo "$APP_NAME" | tr '[:upper:]' '[:lower:]') $candidates"
         fi
         for candidate in $candidates; do
-            if [ -f "$INSTALL_DIR/$candidate" ]; then
+            if [ -f "$INSTALL_BIN/$candidate" ]; then
                 BIN_SRC="$candidate"
                 break
             fi
         done
     fi
-    
     if [ -z "$BIN_SRC" ]; then
-        log_error "Could not find main executable in $INSTALL_DIR"
+        log_error "Could not find main executable in $INSTALL_BIN"
         log_info "Available files:"
-        ls -la "$INSTALL_DIR" 2>/dev/null || echo "  (directory not found)"
+        ls -la "$INSTALL_BIN" 2>/dev/null || echo "  (directory not found)"
         exit 1
     fi
-    
     # Locate icon
     if [ -n "$ICON_PATH" ] && [ -f "$SCRIPT_DIR/$ICON_PATH" ]; then
         ICON_FILE="$SCRIPT_DIR/$ICON_PATH"
     else
-        # Auto-detect icon
         for ext in png ico svg; do
             icon_names="icon logo"
             if [ -n "$APP_NAME" ]; then
                 icon_names="$APP_NAME $(echo "$APP_NAME" | tr ' ' '') $icon_names"
             fi
             for name in $icon_names; do
-                if [ -f "$SCRIPT_DIR/Icons/$name.$ext" ]; then
-                    ICON_FILE="$SCRIPT_DIR/Icons/$name.$ext"
+                if [ -f "$INSTALL_ICONS/$name.$ext" ]; then
+                    ICON_FILE="$INSTALL_ICONS/$name.$ext"
                     break 2
                 fi
             done
         done
     fi
 }
+
 
 # Generate desktop file content
 generate_desktop_file() {
@@ -239,8 +246,10 @@ for arg in "$@"; do
             echo ""
             echo "Required project structure:"
             echo "  manifest.json        - App metadata with desktop integration config"
-            echo "  install/             - Built application directory"
-            echo "  Icons/               - Application icons (optional)"
+            echo "  bin/                 - Built application executables"
+            echo "  lib/                 - Shared libraries (optional)"
+            echo "  icons/               - Application icons (optional)"
+            echo "  install.sh           - This installer script"
             echo ""
             echo "Configuration (manifest.json):"
             echo "  Basic: name, version, description"
@@ -284,59 +293,67 @@ case "$ACTION" in
         # Create directories
         log_info "Creating installation directories..."
         mkdir -p "$INSTALL_PREFIX/bin"
-        mkdir -p "$INSTALL_PREFIX/lib/$PACKAGE_ID"
+        mkdir -p "$INSTALL_PREFIX/lib"
+        mkdir -p "$INSTALL_PREFIX/icons"
         mkdir -p "$INSTALL_PREFIX/share/applications"
         mkdir -p "$INSTALL_PREFIX/share/icons/hicolor/256x256/apps"
-        
+
         # Install application
         log_info "Installing $APP_NAME..."
-        cp "$INSTALL_DIR/$BIN_SRC" "$INSTALL_PREFIX/lib/$PACKAGE_ID/"
-        
-        # Copy additional files
-        if [ -f "$INSTALL_DIR/manifest.json" ]; then
-            cp "$INSTALL_DIR/manifest.json" "$INSTALL_PREFIX/lib/$PACKAGE_ID/"
+        cp "$INSTALL_BIN/$BIN_SRC" "$INSTALL_PREFIX/bin/"
+
+        # Copy manifest.json
+        if [ -f "$SCRIPT_DIR/manifest.json" ]; then
+            cp "$SCRIPT_DIR/manifest.json" "$INSTALL_PREFIX/"
         fi
-        
+
         # Copy shared libraries
-        if ls "$INSTALL_DIR"/*.so* 1> /dev/null 2>&1; then
+        if ls "$INSTALL_LIB"/*.so* 1> /dev/null 2>&1; then
             log_info "Installing shared libraries..."
-            cp "$INSTALL_DIR"/*.so* "$INSTALL_PREFIX/lib/$PACKAGE_ID/" 2>/dev/null || true
+            cp "$INSTALL_LIB"/*.so* "$INSTALL_PREFIX/lib/" 2>/dev/null || true
         fi
-        
-        # Create wrapper script
-        log_info "Creating launcher script..."
-        cat > "$INSTALL_PREFIX/bin/$PACKAGE_ID" << EOF
-#!/bin/bash
-export LD_LIBRARY_PATH="$INSTALL_PREFIX/lib/$PACKAGE_ID:\$LD_LIBRARY_PATH"
-export PATH="$INSTALL_PREFIX/lib/$PACKAGE_ID:\$PATH"
-exec "$INSTALL_PREFIX/lib/$PACKAGE_ID/$BIN_SRC" "\$@"
-EOF
-        chmod +x "$INSTALL_PREFIX/bin/$PACKAGE_ID"
-        
-        # Install desktop file
-        log_info "Installing desktop entry..."
-        generate_desktop_file > "$INSTALL_PREFIX/share/applications/$PACKAGE_ID.desktop"
-        chmod 644 "$INSTALL_PREFIX/share/applications/$PACKAGE_ID.desktop"
-        
-        # Install icon
+
+        # Install icons
         if [ -n "$ICON_FILE" ] && [ -f "$ICON_FILE" ]; then
             log_info "Installing application icon..."
+            cp "$ICON_FILE" "$INSTALL_PREFIX/icons/$PACKAGE_ID.png"
             cp "$ICON_FILE" "$INSTALL_PREFIX/share/icons/hicolor/256x256/apps/$PACKAGE_ID.png"
         else
             log_warning "No icon found, application will use default icon"
         fi
-        
+
+        # Create wrapper script
+        log_info "Creating launcher script..."
+        cat > "$INSTALL_PREFIX/bin/$PACKAGE_ID" << EOF
+#!/bin/bash
+export LD_LIBRARY_PATH="$INSTALL_PREFIX/lib:\$LD_LIBRARY_PATH"
+export PATH="$INSTALL_PREFIX/bin:\$PATH"
+exec "$INSTALL_PREFIX/bin/$BIN_SRC" "\$@"
+EOF
+        chmod +x "$INSTALL_PREFIX/bin/$PACKAGE_ID"
+
+        # Run optional post-install customization script
+        if [ -f "$SCRIPT_DIR/post-install.sh" ]; then
+            log_info "Running post-install customization script..."
+            bash "$SCRIPT_DIR/post-install.sh" "$INSTALL_PREFIX" "$PACKAGE_ID" "$APP_NAME"
+        fi
+
+        # Install desktop file
+        log_info "Installing desktop entry..."
+        generate_desktop_file > "$INSTALL_PREFIX/share/applications/$PACKAGE_ID.desktop"
+        chmod 644 "$INSTALL_PREFIX/share/applications/$PACKAGE_ID.desktop"
+
         # Update system databases
         if command -v update-desktop-database &> /dev/null; then
             log_info "Updating desktop database..."
             update-desktop-database "$INSTALL_PREFIX/share/applications" 2>/dev/null || true
         fi
-        
+
         if command -v gtk-update-icon-cache &> /dev/null; then
             log_info "Updating icon cache..."
             gtk-update-icon-cache -t "$INSTALL_PREFIX/share/icons/hicolor" 2>/dev/null || true
         fi
-        
+
         log_success "$APP_NAME installed successfully!"
         log_info "Run '$PACKAGE_ID' to launch the application"
         log_info "Or find it in your application menu"
