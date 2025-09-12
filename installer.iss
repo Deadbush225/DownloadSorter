@@ -7,6 +7,9 @@
 #ifndef MyAppVersion
   #define MyAppVersion "1.0.1"
 #endif
+#ifndef MyPackageId
+  #define MyPackageId "downloadsorter"
+#endif
 
 #define MyAppPublisher "My Company, Inc."
 #define MyAppURL "https://github.com/Deadbush225/DownloadSorter"
@@ -44,7 +47,7 @@ DisableProgramGroupPage=yes
 ; Remove the following line to run in administrative install mode (install for all users).
 PrivilegesRequired=lowest
 OutputDir=windows-installer
-OutputBaseFilename=download-sorter-{#MyAppVersion}
+OutputBaseFilename={#MyPackageId}-{#MyAppVersion}
 SolidCompression=yes
 Compression=lzma2/ultra64
 CompressionThreads=auto

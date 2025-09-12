@@ -2,7 +2,8 @@
 $manifest = Get-Content -Raw -Path "./manifest.json" | ConvertFrom-Json
 $version = "$($manifest.version)".Trim()
 $desktopName = "$($manifest.desktop.desktop_name)".Trim()
-Write-Host "Building installer version $version for $desktopName"
+$packageId = "$($manifest.desktop.package_id)".Trim()
+Write-Host "Building installer version $version for $desktopName (package: $packageId)"
 
 $installDir = Resolve-Path "./install"
 $mainExe = Join-Path $installDir "bin/DownloadSorter.exe"
@@ -17,7 +18,7 @@ Write-Host "Qt6Core.dll present: $qtDllPresent"
 # No additional deployment needed here
 
 # Build the Windows installer with Inno Setup, passing values as defines
-Start-Process "ISCC.exe" -ArgumentList @("/DMyAppVersion=$version", "/DMyAppName=`"$desktopName`"", "./installer.iss") -NoNewWindow -Wait
+Start-Process "ISCC.exe" -ArgumentList @("/DMyAppVersion=$version", "/DMyAppName=`"$desktopName`"", "/DMyPackageId=$packageId", "./installer.iss") -NoNewWindow -Wait
 
 # List the produced installer(s)
 Get-ChildItem -Path "./windows-installer" -Filter "*.exe" | ForEach-Object { Write-Host "Built installer: $($_.FullName)" }
