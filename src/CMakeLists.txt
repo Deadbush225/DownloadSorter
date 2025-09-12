@@ -208,6 +208,15 @@ if(WIN32 OR APPLE)
         set(deploy_script "${CMAKE_CURRENT_BINARY_DIR}/deploy_${PROJECT_NAME}.cmake")
         set(MAIN_BASENAME "DownloadSorter")
         set(UPDATER_BASENAME "eUpdater")
+
+        if(WIN32)
+            set(MAIN_EXE_PATH "bin/${MAIN_BASENAME}.exe")
+            set(UPDATER_EXE_PATH "bin/${UPDATER_BASENAME}.exe")
+        elseif(APPLE)
+            set(MAIN_EXE_PATH "bin/${MAIN_BASENAME}.app")
+            set(UPDATER_EXE_PATH "bin/${UPDATER_BASENAME}.app")
+        endif()
+
         configure_file(
             "${CMAKE_CURRENT_SOURCE_DIR}/cmake/DeployRuntime.cmake.in"
             "${deploy_script}"
@@ -321,7 +330,7 @@ elseif(MINGW)
 
     if(STRIP_EXECUTABLE)
         add_custom_command(TARGET install_local POST_BUILD
-            COMMAND ${STRIP_EXECUTABLE} --strip-unneeded "${INSTALL_DIR}/*.exe" 2>nul || echo "Strip completed"
+            COMMAND ${STRIP_EXECUTABLE} --strip-unneeded "${INSTALL_DIR}/${CMAKE_INSTALL_BINDIR}/*.exe" 2>nul || echo "Strip completed"
             COMMENT "Stripping debug symbols from Windows binaries (MinGW)"
         )
     endif()
@@ -330,7 +339,7 @@ elseif(MINGW)
 
     if(UPX_EXECUTABLE)
         add_custom_command(TARGET install_local POST_BUILD
-            COMMAND ${UPX_EXECUTABLE} --best "${INSTALL_DIR}/*.exe" 2>nul || echo "UPX completed"
+            COMMAND ${UPX_EXECUTABLE} --best "${INSTALL_DIR}/${CMAKE_INSTALL_BINDIR}/*.exe" 2>nul || echo "UPX completed"
             COMMENT "Compressing Windows binaries with UPX (MinGW)"
         )
     endif()
