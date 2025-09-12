@@ -100,7 +100,7 @@ jobs:
       - name: Build application (MSVC)
         run: |
           cd src
-          cmake -B build -G "Visual Studio 17 2022" -A x64 -DCMAKE_PREFIX_PATH="${{ env.Qt6_DIR }}" --debug-output
+          cmake -B build -G "Visual Studio 17 2022" -A x64 -DCMAKE_PREFIX_PATH="${{ env.Qt6_DIR }}"
           cmake --build build --config Release -j 4
 
       - name: Debug Qt paths
@@ -121,7 +121,7 @@ jobs:
       - name: Install and deploy Qt dependencies
         run: |
           cd src
-          cmake --build build --target install_local --config Release -j 2 --verbose
+          cmake --build build --target install_local --config Release -j 2
 
       - name: Verify Qt deployment
         shell: pwsh
@@ -169,8 +169,8 @@ jobs:
           Write-Host "=== Running windeployqt fallback ==="
           $qtDir = "${{ env.Qt6_DIR }}"
           $windeploy = Join-Path $qtDir "bin/windeployqt.exe"
-          $mainExe = "./install/Download Sorter.exe"
-          $updaterExe = "./install/Updater.exe"
+          $mainExe = "./install/bin/DownloadSorter.exe"
+          $updaterExe = "./install/bin/eUpdater.exe"
 
           if (Test-Path $windeploy) {
             Write-Host "Running windeployqt for main application..."

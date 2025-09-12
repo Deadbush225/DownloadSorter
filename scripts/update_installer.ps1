@@ -4,11 +4,11 @@ $version = "$($manifest.version)".Trim()
 Write-Host "Building installer version $version"
 
 $installDir = Resolve-Path "./install"
-$mainExe = Join-Path $installDir "Download Sorter.exe"
-$updaterExe = Join-Path $installDir "Updater.exe"
+$mainExe = Join-Path $installDir "bin/DownloadSorter.exe"
+$updaterExe = Join-Path $installDir "bin/eUpdater.exe"
 
 # If Qt DLLs not present (e.g., deploy skipped), try windeployqt as fallback
-$qtDllPresent = Test-Path (Join-Path $installDir "Qt6Core.dll")
+$qtDllPresent = (Test-Path (Join-Path $installDir "Qt6Core.dll")) -or (Test-Path (Join-Path $installDir "bin/Qt6Core.dll"))
 Write-Host "Qt6Core.dll present: $qtDllPresent"
 
 # Disable windeployqt completely - CMake qt_deploy_runtime_dependencies should handle this

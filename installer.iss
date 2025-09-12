@@ -32,7 +32,7 @@
 
 #define MyAppPublisher "My Company, Inc."
 #define MyAppURL "https://github.com/Deadbush225/DownloadSorter"
-#define MyAppExeName "Download Sorter.exe"
+#define MyAppExeName "DownloadSorter.exe"
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
@@ -53,7 +53,7 @@ DefaultDirName={localappdata}\Programs\{#MyAppName}
 
 ; Ensure the directory page is visible (optional, it's shown by default)
 DisableDirPage=no
-UninstallDisplayIcon={app}\{#MyAppExeName}
+UninstallDisplayIcon={app}\bin\{#MyAppExeName}
 ; "ArchitecturesAllowed=x64compatible" specifies that Setup cannot run
 ; on anything but x64 and Windows 11 on Arm.
 ArchitecturesAllowed=x64compatible
@@ -71,7 +71,7 @@ SolidCompression=yes
 Compression=lzma2/ultra64
 CompressionThreads=auto
 WizardStyle=modern
-SetupIconFile="src\icons\Download Sorter.ico"
+SetupIconFile="install\icons\DownloadSorter.png"
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -85,10 +85,10 @@ Source: "install\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs creat
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
-Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
-Name: "{autoprograms}\{#MyAppName} Updater"; Filename: "{app}\Updater.exe"
-Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
+Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\bin\{#MyAppExeName}"
+Name: "{autoprograms}\{#MyAppName} Updater"; Filename: "{app}\bin\eUpdater.exe"
+Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\bin\{#MyAppExeName}"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\bin\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 

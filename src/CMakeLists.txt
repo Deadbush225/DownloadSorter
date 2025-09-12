@@ -262,6 +262,11 @@ install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/icons/Download Sorter.png"
     RENAME "DownloadSorter.png"
 )
 
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/icons/Download Sorter.ico"
+    DESTINATION ${CMAKE_INSTALL_ICONDIR}
+    RENAME "DownloadSorter.ico"
+)
+
 # Prune optional/banned bits that may remain or from previous installs using a script file
 install(SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/cmake/PruneInstall.cmake")
 
