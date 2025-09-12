@@ -14,7 +14,7 @@
 		"mime_types": "",
 		"executable": "DownloadSorter",
 		"icon_path": "icons/DownloadSorter.png",
-		"package_id": "downloadsorter",
+		"package_id": "download-sorter",
 		"supports_files": false,
 		"cli_helper": false
 	},
