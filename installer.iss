@@ -2,58 +2,10 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #ifndef MyAppName
-  #ifexist "manifest.json"
-    #define _json LoadStringFromFile("manifest.json")
-    #define _key_name "\"package_id\""
-    #define _p_name Pos(_key_name, _json)
-    #if _p_name > 0
-      #define _after_name Copy(_json, _p_name + Length(_key_name), 2048)
-      #define _dq Chr(34)
-      #define _q1_name Pos(_dq, _after_name)
-      #if _q1_name > 0
-        #define _rest_name Copy(_after_name, _q1_name + 1, 2048)
-        #define _q2_name Pos(_dq, _rest_name)
-        #if _q2_name > 0
-          #define MyAppName Copy(_rest_name, 1, _q2_name - 1)
-        #else
-          #define MyAppName "downloadsorter"
-        #endif
-      #else
-        #define MyAppName "downloadsorter"
-      #endif
-    #else
-      #define MyAppName "downloadsorter"
-    #endif
-  #else
-    #define MyAppName "downloadsorter"
-  #endif
+  #define MyAppName "Download Sorter"
 #endif
 #ifndef MyAppVersion
-  #ifexist "manifest.json"
-    #define _json LoadStringFromFile("manifest.json")
-    #define _key "\"version\""
-    #define _p Pos(_key, _json)
-    #if _p > 0
-      #define _after Copy(_json, _p + Length(_key), 2048)
-      #define _dq Chr(34)
-      #define _q1 Pos(_dq, _after)
-      #if _q1 > 0
-        #define _rest Copy(_after, _q1 + 1, 2048)
-        #define _q2 Pos(_dq, _rest)
-        #if _q2 > 0
-          #define MyAppVersion Copy(_rest, 1, _q2 - 1)
-        #else
-          #define MyAppVersion "0.0.0"
-        #endif
-      #else
-        #define MyAppVersion "0.0.0"
-      #endif
-    #else
-      #define MyAppVersion "0.0.0"
-    #endif
-  #else
-    #define MyAppVersion "0.0.0"
-  #endif
+  #define MyAppVersion "1.0.1"
 #endif
 
 #define MyAppPublisher "My Company, Inc."

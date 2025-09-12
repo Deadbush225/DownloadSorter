@@ -1,7 +1,8 @@
-# Read version from manifest.json
+# Read values from manifest.json
 $manifest = Get-Content -Raw -Path "./manifest.json" | ConvertFrom-Json
 $version = "$($manifest.version)".Trim()
-Write-Host "Building installer version $version"
+$desktopName = "$($manifest.desktop.desktop_name)".Trim()
+Write-Host "Building installer version $version for $desktopName"
 
 $installDir = Resolve-Path "./install"
 $mainExe = Join-Path $installDir "bin/DownloadSorter.exe"
@@ -15,8 +16,8 @@ Write-Host "Qt6Core.dll present: $qtDllPresent"
 # Qt deployment is now handled by CMake deployment script using windeployqt
 # No additional deployment needed here
 
-# Build the Windows installer with Inno Setup, injecting version
-Start-Process "ISCC.exe" -ArgumentList "/DMyAppVersion=$version ./installer.iss" -NoNewWindow -Wait
+# Build the Windows installer with Inno Setup, passing values as defines
+Start-Process "ISCC.exe" -ArgumentList "/DMyAppVersion=$version", "/DMyAppName=$desktopName", "./installer.iss" -NoNewWindow -Wait
 
 # List the produced installer(s)
 Get-ChildItem -Path "./windows-installer" -Filter "*.exe" | ForEach-Object { Write-Host "Built installer: $($_.FullName)" }
