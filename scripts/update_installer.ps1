@@ -17,7 +17,7 @@ Write-Host "Qt6Core.dll present: $qtDllPresent"
 # No additional deployment needed here
 
 # Build the Windows installer with Inno Setup, passing values as defines
-Start-Process "ISCC.exe" -ArgumentList "/DMyAppVersion=$version", "/DMyAppName=$desktopName", "./installer.iss" -NoNewWindow -Wait
+Start-Process "ISCC.exe" -ArgumentList @("/DMyAppVersion=$version", "/DMyAppName=`"$desktopName`"", "./installer.iss") -NoNewWindow -Wait
 
 # List the produced installer(s)
 Get-ChildItem -Path "./windows-installer" -Filter "*.exe" | ForEach-Object { Write-Host "Built installer: $($_.FullName)" }
