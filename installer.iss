@@ -71,7 +71,7 @@ SolidCompression=yes
 Compression=lzma2/ultra64
 CompressionThreads=auto
 WizardStyle=modern
-SetupIconFile="install\icons\DownloadSorter.png"
+SetupIconFile="install\icons\DownloadSorter.ico"
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
