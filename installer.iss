@@ -8,7 +8,7 @@
   #define MyAppVersion "1.0.1"
 #endif
 #ifndef MyPackageId
-  #define MyPackageId "downloadsorter"
+  #define MyPackageId "download-sorter"
 #endif
 
 #define MyAppPublisher "My Company, Inc."
